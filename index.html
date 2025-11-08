@@ -34,22 +34,16 @@
              background-color: #3B82F6; /* Blue-500 */
              border-color: #2563EB;
         }
-        #achievement-card {
+        
+        /* Styles for Favorites Modal */
+        #favorites-card {
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         }
-        #achievement-card.active {
+        #favorites-card.active {
             transform: scale(1);
             opacity: 1;
         }
-         .badge-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto;
-        }
-        .badge-icon-sm {
-            width: 48px;
-            height: 48px;
-        }
+
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-2 sm:p-4">
@@ -60,17 +54,17 @@
         <div id="welcome-screen" class="screen active-screen flex-col items-center text-center p-6 sm:p-8 bg-gray-800 rounded-2xl shadow-2xl">
             <h1 class="text-3xl sm:text-4xl font-bold text-yellow-400 mb-4">四技二專統測 英文衝刺</h1>
             <p class="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed">
-                練習開始！你必須依序完成：<br>
-                <strong class="text-green-500">「歷屆考題 (共 30 題)」</strong> → <strong class="text-red-500">「模擬測驗 (20 題)」</strong>。
-                <br><br>
-                Practice start! You must complete the stages in order.
+                點擊下方按鈕，開始 30 題歷屆考題練習！
             </p>
             <div class="space-y-4 w-full max-w-sm">
-                <button onclick="startMission()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
-                    開始練習 <br> <span class="text-sm font-normal">Start Training</span>
+                <button onclick="startPracticeTest()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
+                    開始練習 (共 30 題)
+                </button>
+                <button onclick="showFavoritesModal()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300">
+                    我的最愛單字
                 </button>
             </div>
-             <p class="text-sm text-gray-400 mt-6">完成「模擬測驗」且分數達80分以上即可獲得證書！</p>
+             <p class="text-sm text-gray-400 mt-6">專心練習，熟悉統測題型！</p>
         </div>
 
         <!-- Screen 2: Test -->
@@ -80,6 +74,11 @@
                     <h2 id="test-title" class="text-xl sm:text-2xl font-bold text-yellow-400"></h2>
                     <div class="flex items-center space-x-2 sm:space-x-4">
                         <div id="question-counter" class="text-sm sm:text-lg text-gray-400 font-mono"></div>
+                        <!-- NEW: Favorites Button during test -->
+                        <button id="review-favorites-btn" onclick="pauseTest()" class="text-teal-300 hover:text-teal-200 flex items-center space-x-1 p-2 bg-gray-700 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
+                            <span class="text-sm sm:text-lg font-mono">收藏</span>
+                        </button>
                         <div id="timer" class="text-base sm:text-xl font-mono bg-gray-700 px-3 sm:px-4 py-2 rounded-lg">--:--</div>
                     </div>
                 </div>
@@ -90,7 +89,6 @@
 
                 <div id="question-container" class="text-left">
                     <div id="question-text" class="text-lg sm:text-xl mb-6 text-gray-200 min-h-[60px]"></div>
-                    <!-- Audio player is no longer needed for vocab -->
                     <div id="audio-player" class="mb-6"></div> 
                     <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Options will be injected here -->
@@ -109,476 +107,242 @@
             </div>
         </div>
         
-        <!-- Screen 3: Diagnostic Results (No longer used) -->
-        <div id="results-screen" class="screen"></div>
-
-        <!-- Screen 4: Training Hub -->
-        <div id="training-hub-screen" class="screen flex-col items-center text-center p-6 sm:p-8 bg-gray-800 rounded-2xl shadow-2xl">
-            <h2 class="text-2xl sm:text-3xl font-bold text-yellow-400 mb-2">歷屆考題練習中心 / Exam Center</h2>
-            <p class="text-base sm:text-lg text-gray-300 mb-8">你必須通過 (80%) 兩個模組才能解鎖模擬測驗。</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                <div id="vocab-module-card" class="bg-gray-700 p-6 rounded-lg border-2 border-transparent transition-all duration-300">
-                    <h3 class="text-xl sm:text-2xl font-bold text-cyan-400 mb-3">單字題 (15 題)</h3>
-                    <p class="text-gray-400 mb-4 text-sm sm:text-base">Vocabulary (15 Qs)</p>
-                    <button onclick="startTraining('vocab')" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">開始練習</button>
-                </div>
-                <div id="phrases-module-card" class="bg-gray-700 p-6 rounded-lg border-2 border-transparent transition-all duration-300">
-                    <h3 class="text-xl sm:text-2xl font-bold text-purple-400 mb-3">片語題 (15 題)</h3>
-                    <p class="text-gray-400 mb-4 text-sm sm:text-base">Phrases & Idioms (15 Qs)</p>
-                    <button onclick="startTraining('phrases')" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300">開始練習</button>
-                </div>
-            </div>
-             <button id="final-challenge-button" onclick="startFinalChallenge()" class="mt-10 bg-red-600 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                進行模擬測驗 (20 題)
-             </button>
-             <p id="final-challenge-unlock-msg" class="text-yellow-400 mt-2 text-sm"></p>
-        </div>
-
-        <!-- Screen 5: Module Complete -->
-        <div id="module-complete-screen" class="screen flex-col items-center text-center p-6 sm:p-8 bg-gray-800 rounded-2xl shadow-2xl">
-            <h2 id="module-complete-title" class="text-2xl sm:text-3xl font-bold text-green-400 mb-4"></h2>
+        <!-- Screen 5: Practice Complete (Renamed from Module Complete) -->
+        <div id="practice-complete-screen" class="screen flex-col items-center text-center p-6 sm:p-8 bg-gray-800 rounded-2xl shadow-2xl">
+            <h2 id="module-complete-title" class="text-2xl sm:text-3xl font-bold text-green-400 mb-4">練習完成！</h2>
             <p id="module-complete-message" class="text-base sm:text-lg text-gray-300 mb-6"></p>
             <div class="text-lg sm:text-xl mb-8">本次成績 / Score: <span id="module-score" class="text-xl sm:text-2xl font-bold text-yellow-400"></span></div>
             <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                <button onclick="retryModule()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                    再次挑戰
+                <button onclick="startPracticeTest()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                    再試一次
                 </button>
-                <button onclick="showTrainingHub()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                    返回練習中心
+                <button onclick="restartMission()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                    返回首頁
                 </button>
             </div>
         </div>
 
-        <!-- Screen 6: Final Report -->
-        <div id="final-report-screen" class="screen flex-col items-center text-center p-4 sm:p-8 bg-gray-800 rounded-2xl shadow-2xl">
-            <h2 class="text-3xl sm:text-4xl font-bold text-yellow-400 mb-4">最終學習報告 / Final Study Report</h2>
-            <p class="text-base sm:text-lg text-gray-300 mb-6">恭喜你！測驗完成！</p>
-            
-            <div id="final-rank-container" class="mb-6">
-                <p class="text-base sm:text-lg text-gray-400">你的最終稱號評定為：</p>
-                <h3 id="final-rank-title" class="text-2xl sm:text-3xl font-bold text-yellow-300"></h3>
-            </div>
-            
-            <!-- Comparison container is hidden by default and no longer populated -->
-            <div id="comparison-container" class="w-full bg-gray-900 p-4 sm:p-6 rounded-lg mb-6" style="display:none;">
-                <h4 class="text-lg sm:text-xl font-bold text-gray-300 mb-4">表現對比 / Performance Comparison</h4>
-                <div id="final-comparison-chart" class="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-                    <!-- This content is no longer relevant and will remain hidden -->
-                </div>
-            </div>
-
-            <div id="final-summary-container" class="w-full bg-gray-900 p-4 sm:p-6 rounded-lg mb-6 text-left">
-                <h4 class="text-lg sm:text-xl font-bold text-gray-300 mb-4 text-center">能力總結與評語 / Summary & Feedback</h4>
-                <div id="final-summary-text"></div>
-            </div>
-
-            <div id="unlocked-badges-container" class="w-full mb-8">
-                <h4 class="text-base sm:text-lg font-bold text-gray-400 mb-2">本次練習獲得勳章 / Badges Unlocked:</h4>
-                <div id="unlocked-badges" class="flex flex-wrap justify-center gap-4 p-4 bg-gray-900 rounded-lg min-h-[80px]">
-                    <!-- Badges will be injected here -->
-                </div>
-            </div>
-            
-            <div class="w-full mt-2 space-y-4">
-                <!-- Certificate Generation Section (conditional) -->
-                <div id="certificate-section" class="bg-gray-900 p-4 sm:p-6 rounded-lg border-2 border-yellow-400" style="display: none;">
-                     <h4 class="text-lg sm:text-xl font-bold text-green-400 mb-4 text-center">恭喜通關！請輸入姓名以產生證書</h4>
-                     <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                         <input type="text" id="eng-name-input" placeholder="請輸入英文姓名 (e.g., Chen, Wei-Lin)" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400">
-                         <input type="text" id="chn-name-input" placeholder="請輸入中文姓名 (e.g., 陳偉霖)" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-400">
-                     </div>
-                     <p id="cert-error" class="text-red-500 text-center mb-2 h-4"></p>
-                     <button id="generate-cert-button" onclick="generateCertificate()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl transition duration-300 disabled:opacity-50">
-                         產生證書 (PDF)
-                     </button>
-                </div>
-        
-                <!-- Standard Actions -->
-                <div id="final-actions-container" class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 w-full justify-center" style="display: flex;">
-                    <button id="retry-final-button" onclick="startFinalChallenge()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl transition duration-300 w-full sm:w-auto">
-                        重考模擬測驗
-                    </button>
-                     <button onclick="generateSummaryReport()" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl transition duration-300 w-full sm:w-auto">
-                         下載學習報告 (PDF)
-                     </button>
-                    <button onclick="restartMission()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105 w-full sm:w-auto">
-                        重新開始
-                    </button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Achievement Unlocked Modal -->
-    <div id="achievement-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style="display: none; z-index: 999;">
-        <div class="bg-gray-800 border-2 border-yellow-400 rounded-2xl shadow-2xl p-8 text-center transform transition-all scale-95 opacity-0 w-full max-w-sm" id="achievement-card">
-            <h3 class="text-2xl font-bold text-yellow-400 mb-2">成就解鎖！</h3>
-            <div id="achievement-icon" class="badge-icon my-4"></div>
-            <p id="achievement-name" class="text-xl font-bold text-white"></p>
-            <p id="achievement-desc" class="text-gray-300 mt-1"></p>
-        </div>
     </div>
     
+    <!-- Favorites Modal (NEW) -->
+    <div id="favorites-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style="display: none; z-index: 998;">
+        <div class="bg-gray-800 border-2 border-teal-400 rounded-2xl shadow-2xl p-6 sm:p-8 text-left transform transition-all scale-95 opacity-0 w-full max-w-2xl" id="favorites-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-teal-300">我的最愛單字</h3>
+                <button onclick="hideFavoritesModal()" class="text-gray-300 hover:text-white text-3xl font-bold">&times;</button>
+            </div>
+            <div id="favorites-list" class="max-h-[60vh] overflow-y-auto space-y-3 p-1">
+                <!-- Favorite keywords will be injected here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- DATA ---
-        // 題庫已全面更換為統測歷屆考題 (單字 + 片語)
+        // 題庫已合併為單一練習題庫
+        const allPracticeQuestions = [
+            // --- Vocab Pool ---
+            { type: 'reading', difficulty: 2, question: "Mr. Lin is a very ____ teacher; he always prepares his lessons well and answers students' questions patiently.", translation: "林老師是一位非常____的老師；他總是認真備課，並耐心地回答學生的問題。", options: ["positive", "diligent", "classical", "mature"], answer: 1, keywords: [
+                { word: 'positive', translation: '正面的；積極的', example: 'Keep a positive attitude.', example_translation: '保持積極的態度。' },
+                { word: 'diligent', translation: '勤奮的', example: 'She is a diligent student.', example_translation: '她是一個勤奮的學生。' },
+                { word: 'classical', translation: '古典的', example: 'I enjoy classical music.', example_translation: '我喜歡古典音樂。' },
+                { word: 'mature', translation: '成熟的', example: 'He is mature for his age.', example_translation: '以他的年紀來說，他很成熟。' }
+            ] }, // 112 統測
+            { type: 'reading', difficulty: 2, question: "The doctor ____ me to exercise at least three times a week to stay healthy.", translation: "醫生____我每週至少運動三次以保持健康。", options: ["advised", "advertised", "afforded", "affected"], answer: 0, keywords: [
+                { word: 'advised', translation: '建議 (v. 過去式)', example: 'He advised me to rest.', example_translation: '他建議我休息。' },
+                { word: 'advertised', translation: '廣告 (v. 過去式)', example: 'They advertised their product.', example_translation: '他們為他們的產品做廣告。' },
+                { word: 'afforded', translation: '負擔得起 (v. 過去式)', example: 'He afforded a new car.', example_translation: '他買得起一輛新車。' },
+                { word: 'affected', translation: '影響 (v. 過去式)', example: 'The rain affected the game.', example_translation: '這場雨影響了比賽。' }
+            ] }, // 111 統測
+            { type: 'reading', difficulty: 2, question: "To ____ waste, some people bring their own shopping bags when they go to the supermarket.", translation: "為了____垃圾，有些人去超市會自備購物袋。", options: ["recycle", "reduce", "reuse", "reward"], answer: 1, keywords: [
+                { word: 'recycle', translation: '回收', example: 'We should recycle paper.', example_translation: '我們應該回收紙張。' },
+                { word: 'reduce', translation: '減少', example: 'We must reduce pollution.', example_translation: '我們必須減少污染。' },
+                { word: 'reuse', translation: '重複使用', example: 'You can reuse this bottle.', example_translation: '你可以重複使用這個瓶子。' },
+                { word: 'reward', translation: '獎勵', example: 'He got a reward.', example_translation: '他得到一個獎勵。' }
+            ] }, // 110 統測
+            { type: 'reading', difficulty: 2, question: "The convenience store is open 24 hours a day; it is very ____ for the residents nearby.", translation: "這間便利商店一天營業24小時；它對附近的居民來說非常____。", options: ["convenient", "confident", "conscious", "contrary"], answer: 0, keywords: [
+                { word: 'convenient', translation: '方便的', example: 'It is convenient for me.', example_translation: '這對我很方便。' },
+                { word: 'confident', translation: '有自信的', example: 'She is a confident speaker.', example_translation: '她是一位有自信的演講者。' },
+                { word: 'conscious', translation: '有意識的', example: 'He was conscious of the danger.', example_translation: '他意識到危險。' },
+                { word: 'contrary', translation: '相反的', example: 'On the contrary, he is very kind.', example_translation: '相反地，他人很好。' }
+            ] }, // 109 統測
+            { type: 'reading', difficulty: 2, question: "Helen Keller could not see or hear, but she learned to ____ with people through touch.", translation: "海倫凱勒看不見也聽不到，但她學會了透過觸摸與人____。", options: ["compete", "compare", "complain", "communicate"], answer: 3, keywords: [
+                { word: 'compete', translation: '競爭', example: 'They compete for the prize.', example_translation: '他們為了獎品而競爭。' },
+                { word: 'compare', translation: '比較', example: 'Compare these two bikes.', example_translation: '比較這兩台腳踏車。' },
+                { word: 'complain', translation: '抱怨', example: 'He complained about the food.', example_translation: '他抱怨食物。' },
+                { word: 'communicate', translation: '溝通', example: 'We communicate by email.', example_translation: '我們用電子郵件溝通。' }
+            ] }, // 108 統測
+            { type: 'reading', difficulty: 3, question: "The new movie has drawn ____ from environmental groups because of its messages about pollution.", translation: "這部新電影因其關於污染的訊息而引起了環保團體的____。", options: ["criticism", "suggestion", "preparation", "occupation"], answer: 0, keywords: [
+                { word: 'criticism', translation: '批評', example: 'The plan drew criticism.', example_translation: '這計畫招致批評。' },
+                { word: 'suggestion', translation: '建議', example: 'Do you have any suggestions?', example_translation: '你有任何建議嗎？' },
+                { word: 'preparation', translation: '準備', example: 'Preparation is key to success.', example_translation: '準備是成功的關鍵。' },
+                { word: 'occupation', translation: '職業；佔領', example: 'What is your occupation?', example_translation: '你的職業是什麼？' }
+            ] }, // 112 統測
+            { type: 'reading', difficulty: 3, question: "The company decided to ____ its new product online through social media.", translation: "這間公司決定透過社群媒體在網路上____他們的新產品。", options: ["promote", "protect", "pretend", "prevent"], answer: 0, keywords: [
+                { word: 'promote', translation: '促銷；推廣', example: 'They are promoting their new album.', example_translation: '他們正在宣傳他們的新專輯。' },
+                { word: 'protect', translation: '保護', example: 'We must protect the Earth.', example_translation: '我們必須保護地球。' },
+                { word: 'pretend', translation: '假裝', example: 'He pretended to be asleep.', example_translation: '他假裝睡著了。' },
+                { word: 'prevent', translation: '預防', example: 'This vaccine prevents the flu.', example_translation: '這個疫苗預防流感。' }
+            ] }, // 111 統測
+            { type: 'reading', difficulty: 3, question: "The witness gave a ____ description of what happened at the crime scene.", translation: "目擊者對犯罪現場發生的事情給予了____的描述。", options: ["vague", "various", "vivid", "valuable"], answer: 2, keywords: [
+                { word: 'vague', translation: '模糊的', example: 'His answer was vague.', example_translation: '他的回答很模糊。' },
+                { word: 'various', translation: '各式各樣的', example: 'There are various colors.', example_translation: '有各種不同的顏色。' },
+                { word: 'vivid', translation: '生動的', example: 'She gave a vivid description.', example_translation: '她給了一個生動的描述。' },
+                { word: 'valuable', translation: '有價值的', example: 'This ring is valuable.', example_translation: '這枚戒指很值錢。' }
+            ] }, // 109 統測
+            { type: 'reading', difficulty: 3, question: "He was given an award for his ____ contribution to the company's success.", translation: "他因對公司成功做出____貢獻而獲獎。", options: ["outstanding", "outdoors", "outgoing", "outlines"], answer: 0, keywords: [
+                { word: 'outstanding', translation: '傑出的', example: 'That was an outstanding performance.', example_translation: '那真是場傑出的表演。' },
+                { word: 'outdoors', translation: '戶外 (adv.)', example: 'Let\'s play outdoors.', example_translation: '我們去外面玩吧。' },
+                { word: 'outgoing', translation: '外向的', example: 'She is very outgoing.', example_translation: '她非常外向。' },
+                { word: 'outlines', translation: '輪廓；大綱', example: 'He drew the outline.', example_translation: '他畫了輪廓。' }
+            ] }, // 108 統測
+            { type: 'reading', difficulty: 3, question: "The fire spread quickly and caused ____ damage to the building.", translation: "火勢迅速蔓延，對建築物造成了____的損害。", options: ["considerate", "considerable", "constant", "conscious"], answer: 1, keywords: [
+                { word: 'considerate', translation: '體貼的', example: 'He is very considerate.', example_translation: '他非常體貼。' },
+                { word: 'considerable', translation: '相當大的', example: 'It caused considerable damage.', example_translation: '這造成了相當大的損害。' },
+                { word: 'constant', translation: '持續的', example: 'The machine makes a constant noise.', example_translation: '機器發出持續的噪音。' },
+                { word: 'conscious', translation: '有意識的', example: 'I was conscious of his stare.', example_translation: '我意識到他的注視。' }
+            ] }, // 110 統測
+            { type: 'reading', difficulty: 2, question: "The noise from the construction site ____ me, so I couldn't focus on my work.", translation: "建築工地的噪音____我，所以我無法專心工作。", options: ["disturbed", "discovered", "displayed", "dismissed"], answer: 0, keywords: [
+                { word: 'disturbed', translation: '打擾 (v. 過去式)', example: 'The noise disturbed him.', example_translation: '噪音打擾了他。' },
+                { word: 'discovered', translation: '發現 (v. 過去式)', example: 'He discovered the truth.', example_translation: '他發現了真相。' },
+                { word: 'displayed', translation: '展示 (v. 過去式)', example: 'They displayed the art.', example_translation: '他們展示了藝術品。' },
+                { word: 'dismissed', translation: '解散；解雇 (v. 過去式)', example: 'The class was dismissed.', example_translation: '下課了。' }
+            ] }, // 111 統測
+            { type: 'reading', difficulty: 2, question: "The handmade cookies in this bakery are very ____. They are sold out every day.", translation: "這家麵包店的手工餅乾非常____。它們每天都銷售一空。", options: ["patient", "popular", "public", "punctual"], answer: 1, keywords: [
+                { word: 'patient', translation: '有耐心的；病人', example: 'You need to be patient.', example_translation: '你需要有耐心。' },
+                { word: 'popular', translation: '受歡迎的', example: 'He is very popular.', example_translation: '他很受歡迎。' },
+                { word: 'public', translation: '公眾的', example: 'This is a public park.', example_translation: '這是座公園。' },
+                { word: 'punctual', translation: '準時的', example: 'Please be punctual.', example_translation: '請準時。' }
+            ] }, // 109 統測
+            { type: 'reading', difficulty: 1, question: "Water is ____ for all living things; we cannot live without it.", translation: "水對所有生物都是____的；沒有水我們無法生存。", options: ["essential", "expensive", "extra", "equal"], answer: 0, keywords: [
+                { word: 'essential', translation: '必要的；不可或缺的', example: 'Food is essential for life.', example_translation: '食物是生命所必需的。' },
+                { word: 'expensive', translation: '昂貴的', example: 'This watch is expensive.', example_translation: '這隻手錶很貴。' },
+                { word: 'extra', translation: '額外的', example: 'I need extra time.', example_translation: '我需要額外的時間。' },
+                { word: 'equal', translation: '平等的', example: 'All people are equal.', example_translation: '人皆生而平等。' }
+            ] }, // 110 統測
+            { type: 'reading', difficulty: 2, question: "This organization provides food and shelter for ____ people.", translation: "這個組織為____的人提供食物和住所。", options: ["hopeless", "homeless", "harmless", "helpful"], answer: 1, keywords: [
+                { word: 'hopeless', translation: '絕望的', example: 'The situation is hopeless.', example_translation: '情況令人絕望。' },
+                { word: 'homeless', translation: '無家可歸的', example: 'The city has many homeless people.', example_translation: '這城市有很多無家可歸的人。' },
+                { word: 'harmless', translation: '無害的', example: 'The snake is harmless.', example_translation: '這條蛇無害。' },
+                { word: 'helpful', translation: '有幫助的', example: 'Your advice was helpful.', example_translation: '你的建議很有幫助。' }
+            ] }, // 112 統測
+            { type: 'reading', difficulty: 2, question: "Many factors can ____ a student's performance in school, such as health and study habits.", translation: "許多因素都會____學生的學校表現，例如健康和讀書習慣。", options: ["affect", "alarm", "apply", "attack"], answer: 0, keywords: [
+                { word: 'affect', translation: '影響 (v.)', example: 'The weather affected his mood.', example_translation: '天氣影響了他的心情。' },
+                { word: 'alarm', translation: '警報；使驚慌', example: 'The alarm clock rang.', example_translation: '鬧鐘響了。' },
+                { word: 'apply', translation: '申請；應用', example: 'I will apply for the job.', example_translation: '我將申請這份工作。' },
+                { word: 'attack', translation: '攻擊', example: 'The army will attack.', example_translation: '軍隊將發動攻擊。' }
+            ] }, // 107 統測
+
+            // --- Phrases Pool ---
+            { type: 'reading', difficulty: 2, question: "My scooter broke down on the way to school, so I was ____ for my morning class.", translation: "我的摩托車在上學途中拋錨了，所以我早上的課____了。", options: ["on time", "late", "early", "in time"], answer: 1, keywords: [
+                { word: 'on time', translation: '準時', example: 'The train arrived on time.', example_translation: '火車準時到達。' },
+                { word: 'late', translation: '遲到', example: 'Don\'t be late for class.', example_translation: '上課不要遲到。' },
+                { word: 'early', translation: '早到', example: 'He arrived early.', example_translation: '他提早到了。' },
+                { word: 'in time', translation: '及時', example: 'He arrived just in time.', example_translation: '他剛好及時趕到。' }
+            ] }, // 112 統測
+            { type: 'reading', difficulty: 2, question: "My grandmother is good at ____ children. They all like her.", translation: "我的祖母很擅長____小孩。他們都喜歡她。", options: ["looking for", "looking at", "looking after", "looking up"], answer: 2, keywords: [
+                { word: 'looking for', translation: '尋找', example: 'I am looking for my keys.', example_translation: '我正在找我的鑰匙。' },
+                { word: 'looking at', translation: '看著', example: 'She is looking at the photo.', example_translation: '她正在看著照片。' },
+                { word: 'looking after', translation: '照顧', example: 'He is looking after the baby.', example_translation: '他正在照顧嬰兒。' },
+                { word: 'looking up', translation: '查詢；仰望', example: 'Look up the word in the dictionary.', example_translation: '在字典裡查這個單字。' }
+            ] }, // 111 統測
+            { type: 'reading', difficulty: 2, question: "The basketball game was ____ because of the heavy rain.", translation: "這場籃球賽因為大雨而____。", options: ["put off", "put on", "put up", "put out"], answer: 0, keywords: [
+                { word: 'put off', translation: '延期', example: 'They put off the meeting.', example_translation: '他們延後了會議。' },
+                { word: 'put on', translation: '穿上', example: 'Put on your coat.', example_translation: '穿上你的外套。' },
+                { word: 'put up', translation: '舉起；建造', example: 'He put up his hand.', example_translation: '他舉起了手。' },
+                { word: 'put out', translation: '熄滅', example: 'Put out the fire.', example_translation: '熄滅火。' }
+            ] }, // 110 統測
+            { type: 'reading', difficulty: 2, question: "Joe ____ his parents in personality; he is as outgoing as they are.", translation: "Joe 在個性上____他的父母；他跟他們一樣外向。", options: ["looks after", "takes after", "tries on", "turns on"], answer: 1, keywords: [
+                { word: 'looks after', translation: '照顧', example: 'She looks after her little brother.', example_translation: '她照顧她的弟弟。' },
+                { word: 'takes after', translation: '與...相像', example: 'He takes after his father.', example_translation: '他長得很像他父親。' },
+                { word: 'tries on', translation: '試穿', example: 'Try on these shoes.', example_translation: '試穿這雙鞋。' },
+                { word: 'turns on', translation: '打開(電源)', example: 'Turn on the light.', example_translation: '打開燈。' }
+            ] }, // 109 統測
+            { type: 'reading', difficulty: 2, question: "The movie is ____ a true story about a high school basketball team.", translation: "這部電影是____一個高中籃球隊的真實故事。", options: ["based on", "bored with", "famous for", "proud of"], answer: 0, keywords: [
+                { word: 'based on', translation: '基於；根據', example: 'The film is based on a true story.', example_translation: '這部電影是根據真實故事改編的。' },
+                { word: 'bored with', translation: '對...感到厭煩', example: 'I am bored with this game.', example_translation: '我對這個遊戲感到厭煩。' },
+                { word: 'famous for', translation: '以...聞名', example: 'This city is famous for its food.', example_translation: '這座城市以美食聞名。' },
+                { word: 'proud of', translation: '對...感到驕傲', example: 'I am proud of you.', example_translation: '我為你感到驕傲。' }
+            ] }, // 108 統測
+            { type: 'reading', difficulty: 3, question: "When you are in trouble, you can always ____ your family for help.", translation: "當你遇到麻煩時，你總是能____你的家人尋求幫助。", options: ["count on", "get on", "live on", "pass on"], answer: 0, keywords: [
+                { word: 'count on', translation: '依靠；指望', example: 'You can count on me.', example_translation: '你可以依靠我。' },
+                { word: 'get on', translation: '上(車)', example: 'Get on the bus.', example_translation: '上公車。' },
+                { word: 'live on', translation: '以...維生', example: 'He lives on a small salary.', example_translation: '他靠微薄的薪水維生。' },
+                { word: 'pass on', translation: '傳遞', example: 'Pass on the message.', example_translation: '把訊息傳下去。' }
+            ] }, // 112 統測
+            { type: 'reading', difficulty: 3, question: "Please don't ____ writing your report. The deadline is tomorrow.", translation: "請不要____寫你的報告。截止日期是明天。", options: ["put off", "put on", "put down", "put away"], answer: 0, keywords: [
+                { word: 'put off', translation: '延期', example: 'Don\'t put off your homework.', example_translation: '不要拖延你的作業。' },
+                { word: 'put on', translation: '穿上', example: 'Put on your jacket.', example_translation: '穿上你的夾克。' },
+                { word: 'put down', translation: '放下；鎮壓', example: 'Put down the heavy box.', example_translation: '放下那個重箱子。' },
+                { word: 'put away', translation: '收好', example: 'Put away your toys.', example_translation: '把你的玩具收好。' }
+            ] }, // 111 統測
+            { type: 'reading', difficulty: 3, question: "I don't know this word. I need to ____ in the dictionary.", translation: "我不知道這個字。我需要____字典。", options: ["look it up", "look for it", "look at it", "look after it"], answer: 0, keywords: [
+                { word: 'look it up', translation: '查詢 (it/受詞需放中間)', example: 'I will look the word up.', example_translation: '我會查這個單字。' },
+                { word: 'look for it', translation: '尋找它', example: 'I am looking for my phone.', example_translation: '我正在找我的手機。' },
+                { word: 'look at it', translation: '看著它', example: 'Look at the picture.', example_translation: '看著這張圖片。' },
+                { word: 'look after it', translation: '照顧它', example: 'Can you look after my dog?', example_translation: '你能照顧我的狗嗎？' }
+            ] }, // 110 統測
+            { type: 'reading', difficulty: 3, question: "I ____ my old friend at the train station yesterday. What a surprise!", translation: "我昨天在火車站____我的老朋友。真是驚喜！", options: ["ran into", "ran away", "ran out of", "ran over"], answer: 0, keywords: [
+                { word: 'ran into', translation: '偶然遇見', example: 'I ran into Tom today.', example_translation: '我今天巧遇了湯姆。' },
+                { word: 'ran away', translation: '逃跑', example: 'The thief ran away.', example_translation: '小偷跑走了。' },
+                { word: 'ran out of', translation: '用完', example: 'We ran out of milk.', example_translation: '我們牛奶喝完了。' },
+                { word: 'ran over', translation: '輾過', example: 'The car ran over a can.', example_translation: '車子輾過一個罐子。' }
+            ] }, // 109 統測
+            { type: 'reading', difficulty: 3, question: "To stay healthy, you should eat a balanced diet and exercise ____.", translation: "為了保持健康，你應該均衡飲食並____運動。", options: ["at times", "at once", "all of a sudden", "on a regular basis"], answer: 3, keywords: [
+                { word: 'at times', translation: '有時候', example: 'I feel lonely at times.', example_translation: '我有時候感到寂寞。' },
+                { word: 'at once', translation: '立刻', example: 'Come here at once.', example_translation: '立刻過來。' },
+                { word: 'all of a sudden', translation: '突然', example: 'All of a sudden, it started to rain.', example_translation: '突然下起雨來了。' },
+                { word: 'on a regular basis', translation: '規律地', example: 'You should exercise on a regular basis.', example_translation: '你應該規律地運動。' }
+            ] }, // 108 統測
+            { type: 'reading', difficulty: 2, question: "The weather is nice, so I ____ going for a walk in the park.", translation: "天氣很好，所以我____去公園散步。", options: ["look like", "sound like", "feel like", "smell like"], answer: 2, keywords: [
+                { word: 'look like', translation: '看起來像', example: 'It looks like rain.', example_translation: '看起來快下雨了。' },
+                { word: 'sound like', translation: '聽起來像', example: 'That sounds like a good idea.', example_translation: '那聽起來是個好主意。' },
+                { word: 'feel like', translation: '想要', example: 'I feel like eating ice cream.', example_translation: '我想要吃冰淇淋。' },
+                { word: 'smell like', translation: '聞起來像', example: 'It smells like cookies.', example_translation: '聞起來像餅乾。' }
+            ] }, // 112 統測
+            { type: 'reading', difficulty: 3, question: "____ all the difficulties, he never gave up his dream of becoming a singer.", translation: "____所有困難，他從未放棄成為歌手的夢想。", options: ["Thanks to", "In spite of", "Instead of", "Because of"], answer: 1, keywords: [
+                { word: 'Thanks to', translation: '幸虧；由於', example: 'Thanks to your help, I succeeded.', example_translation: '幸虧有你的幫助，我成功了。' },
+                { word: 'In spite of', translation: '儘管', example: 'In spite of the rain, we went out.', example_translation: '儘管下雨，我們還是出去了。' },
+                { word: 'Instead of', translation: '代替', example: 'He bought tea instead of coffee.', example_translation: '他買了茶而不是咖啡。' },
+                { word: 'Because of', translation: '因為', example: 'We cancelled the trip because of the storm.', example_translation: '因為暴風雨，我們取消了旅行。' }
+            ] }, // 111 統測
+            { type: 'reading', difficulty: 2, question: "You should ____ the lights when you leave the room to save energy.", translation: "當你離開房間時，你應該____電燈以節約能源。", options: ["turn off", "turn on", "turn into", "turn down"], answer: 0, keywords: [
+                { word: 'turn off', translation: '關掉(電源)', example: 'Please turn off the TV.', example_translation: '請關掉電視。' },
+                { word: 'turn on', translation: '打開(電源)', example: 'Turn on the radio.', example_translation: '打開收音機。' },
+                { word: 'turn into', translation: '變成', example: 'The frog turned into a prince.', example_translation: '青蛙變成了王子。' },
+                { word: 'turn down', translation: '拒絕；轉小聲', example: 'He turned down the offer.', example_translation: '他拒絕了那個提議。' }
+            ] }, // 110 統測
+            { type: 'reading', difficulty: 3, question: "You have to work hard; ____, you will fail the course.", translation: "你必須努力用功；____，你會不及格這門課。", options: ["however", "otherwise", "likewise", "besides"], answer: 1, keywords: [
+                { word: 'however', translation: '然而', example: 'He was tired; however, he kept working.', example_translation: '他很累，然而他繼續工作。' },
+                { word: 'otherwise', translation: '否則', example: 'Study hard, otherwise you will fail.', example_translation: '努力讀書，否則你會不及格。' },
+                { word: 'likewise', translation: '同樣地', example: 'She bought a hat, and I did likewise.', example_translation: '她買了頂帽子，我也一樣。' },
+                { word: 'besides', translation: '此外', example: 'It\'s late; besides, I\'m tired.', example_translation: '天晚了，而且我也累了。' }
+            ] }, // 109 統測
+            { type: 'reading', difficulty: 2, question: "My father used to read newspapers to ____ what was happening in the world.", translation: "我父親以前常常讀報紙來____世界上發生了什麼事。", options: ["find out", "get off", "take place", "look for"], answer: 0, keywords: [
+                { word: 'find out', translation: '查明；發現', example: 'We need to find out the truth.', example_translation: '我們需要查明真相。' },
+                { word: 'get off', translation: '下(車)', example: 'I get off at the next stop.', example_translation: '我下一站下車。' },
+                { word: 'take place', translation: '舉行；發生', example: 'The meeting will take place on Monday.', example_translation: '會議將在週一舉行。' },
+                { word: 'look for', translation: '尋找', example: 'What are you looking for?', example_translation: '你在找什麼？' }
+            ] }, // 108 統測
+        ];
+
         const questions = {
-            vocab: [
-                // 112 統測
-                { type: 'reading', difficulty: 2, question: "Mr. Lin is a very ____ teacher; he always prepares his lessons well and answers students' questions patiently.", translation: "林老師是一位非常____的老師；他總是認真備課，並耐心地回答學生的問題。", options: ["positive", "diligent", "classical", "mature"], answer: 1, keywords: [
-                    { word: 'positive', translation: '正面的；積極的', example: 'Keep a positive attitude.', example_translation: '保持積極的態度。' },
-                    { word: 'diligent', translation: '勤奮的', example: 'She is a diligent student.', example_translation: '她是一個勤奮的學生。' },
-                    { word: 'classical', translation: '古典的', example: 'I enjoy classical music.', example_translation: '我喜歡古典音樂。' },
-                    { word: 'mature', translation: '成熟的', example: 'He is mature for his age.', example_translation: '以他的年紀來說，他很成熟。' }
-                ] }, // 112 統測
-                // 111 統測
-                { type: 'reading', difficulty: 2, question: "The doctor ____ me to exercise at least three times a week to stay healthy.", translation: "醫生____我每週至少運動三次以保持健康。", options: ["advised", "advertised", "afforded", "affected"], answer: 0, keywords: [
-                    { word: 'advised', translation: '建議 (v. 過去式)', example: 'He advised me to rest.', example_translation: '他建議我休息。' },
-                    { word: 'advertised', translation: '廣告 (v. 過去式)', example: 'They advertised their product.', example_translation: '他們為他們的產品做廣告。' },
-                    { word: 'afforded', translation: '負擔得起 (v. 過去式)', example: 'He afforded a new car.', example_translation: '他買得起一輛新車。' },
-                    { word: 'affected', translation: '影響 (v. 過去式)', example: 'The rain affected the game.', example_translation: '這場雨影響了比賽。' }
-                ] }, // 111 統測
-                // 110 統測
-                { type: 'reading', difficulty: 2, question: "To ____ waste, some people bring their own shopping bags when they go to the supermarket.", translation: "為了____垃圾，有些人去超市會自備購物袋。", options: ["recycle", "reduce", "reuse", "reward"], answer: 1, keywords: [
-                    { word: 'recycle', translation: '回收', example: 'We should recycle paper.', example_translation: '我們應該回收紙張。' },
-                    { word: 'reduce', translation: '減少', example: 'We must reduce pollution.', example_translation: '我們必須減少污染。' },
-                    { word: 'reuse', translation: '重複使用', example: 'You can reuse this bottle.', example_translation: '你可以重複使用這個瓶子。' },
-                    { word: 'reward', translation: '獎勵', example: 'He got a reward.', example_translation: '他得到一個獎勵。' }
-                ] }, // 110 統測
-                // 109 統測
-                { type: 'reading', difficulty: 2, question: "The convenience store is open 24 hours a day; it is very ____ for the residents nearby.", translation: "這間便利商店一天營業24小時；它對附近的居民來說非常____。", options: ["convenient", "confident", "conscious", "contrary"], answer: 0, keywords: [
-                    { word: 'convenient', translation: '方便的', example: 'It is convenient for me.', example_translation: '這對我很方便。' },
-                    { word: 'confident', translation: '有自信的', example: 'She is a confident speaker.', example_translation: '她是一位有自信的演講者。' },
-                    { word: 'conscious', translation: '有意識的', example: 'He was conscious of the danger.', example_translation: '他意識到危險。' },
-                    { word: 'contrary', translation: '相反的', example: 'On the contrary, he is very kind.', example_translation: '相反地，他人很好。' }
-                ] }, // 109 統測
-                // 108 統測
-                { type: 'reading', difficulty: 2, question: "Helen Keller could not see or hear, but she learned to ____ with people through touch.", translation: "海倫凱勒看不見也聽不到，但她學會了透過觸摸與人____。", options: ["compete", "compare", "complain", "communicate"], answer: 3, keywords: [
-                    { word: 'compete', translation: '競爭', example: 'They compete for the prize.', example_translation: '他們為了獎品而競爭。' },
-                    { word: 'compare', translation: '比較', example: 'Compare these two bikes.', example_translation: '比較這兩台腳踏車。' },
-                    { word: 'complain', translation: '抱怨', example: 'He complained about the food.', example_translation: '他抱怨食物。' },
-                    { word: 'communicate', translation: '溝通', example: 'We communicate by email.', example_translation: '我們用電子郵件溝通。' }
-                ] }, // 108 統測
-                // 112 統測
-                { type: 'reading', difficulty: 3, question: "The new movie has drawn ____ from environmental groups because of its messages about pollution.", translation: "這部新電影因其關於污染的訊息而引起了環保團體的____。", options: ["criticism", "suggestion", "preparation", "occupation"], answer: 0, keywords: [
-                    { word: 'criticism', translation: '批評', example: 'The plan drew criticism.', example_translation: '這計畫招致批評。' },
-                    { word: 'suggestion', translation: '建議', example: 'Do you have any suggestions?', example_translation: '你有任何建議嗎？' },
-                    { word: 'preparation', translation: '準備', example: 'Preparation is key to success.', example_translation: '準備是成功的關鍵。' },
-                    { word: 'occupation', translation: '職業；佔領', example: 'What is your occupation?', example_translation: '你的職業是什麼？' }
-                ] }, // 112 統測
-                // 111 統測
-                { type: 'reading', difficulty: 3, question: "The company decided to ____ its new product online through social media.", translation: "這間公司決定透過社群媒體在網路上____他們的新產品。", options: ["promote", "protect", "pretend", "prevent"], answer: 0, keywords: [
-                    { word: 'promote', translation: '促銷；推廣', example: 'They are promoting their new album.', example_translation: '他們正在宣傳他們的新專輯。' },
-                    { word: 'protect', translation: '保護', example: 'We must protect the Earth.', example_translation: '我們必須保護地球。' },
-                    { word: 'pretend', translation: '假裝', example: 'He pretended to be asleep.', example_translation: '他假裝睡著了。' },
-                    { word: 'prevent', translation: '預防', example: 'This vaccine prevents the flu.', example_translation: '這個疫苗預防流感。' }
-                ] }, // 111 統測
-                // 109 統測
-                { type: 'reading', difficulty: 3, question: "The witness gave a ____ description of what happened at the crime scene.", translation: "目擊者對犯罪現場發生的事情給予了____的描述。", options: ["vague", "various", "vivid", "valuable"], answer: 2, keywords: [
-                    { word: 'vague', translation: '模糊的', example: 'His answer was vague.', example_translation: '他的回答很模糊。' },
-                    { word: 'various', translation: '各式各樣的', example: 'There are various colors.', example_translation: '有各種不同的顏色。' },
-                    { word: 'vivid', translation: '生動的', example: 'She gave a vivid description.', example_translation: '她給了一個生動的描述。' },
-                    { word: 'valuable', translation: '有價值的', example: 'This ring is valuable.', example_translation: '這枚戒指很值錢。' }
-                ] }, // 109 統測
-                // 108 統測
-                { type: 'reading', difficulty: 3, question: "He was given an award for his ____ contribution to the company's success.", translation: "他因對公司成功做出____貢獻而獲獎。", options: ["outstanding", "outdoors", "outgoing", "outlines"], answer: 0, keywords: [
-                    { word: 'outstanding', translation: '傑出的', example: 'That was an outstanding performance.', example_translation: '那真是場傑出的表演。' },
-                    { word: 'outdoors', translation: '戶外 (adv.)', example: 'Let\'s play outdoors.', example_translation: '我們去外面玩吧。' },
-                    { word: 'outgoing', translation: '外向的', example: 'She is very outgoing.', example_translation: '她非常外向。' },
-                    { word: 'outlines', translation: '輪廓；大綱', example: 'He drew the outline.', example_translation: '他畫了輪廓。' }
-                ] }, // 108 統測
-                // 110 統測
-                { type: 'reading', difficulty: 3, question: "The fire spread quickly and caused ____ damage to the building.", translation: "火勢迅速蔓延，對建築物造成了____的損害。", options: ["considerate", "considerable", "constant", "conscious"], answer: 1, keywords: [
-                    { word: 'considerate', translation: '體貼的', example: 'He is very considerate.', example_translation: '他非常體貼。' },
-                    { word: 'considerable', translation: '相當大的', example: 'It caused considerable damage.', example_translation: '這造成了相當大的損害。' },
-                    { word: 'constant', translation: '持續的', example: 'The machine makes a constant noise.', example_translation: '機器發出持續的噪音。' },
-                    { word: 'conscious', translation: '有意識的', example: 'I was conscious of his stare.', example_translation: '我意識到他的注視。' }
-                ] }, // 110 統測
-                // 111 統測
-                { type: 'reading', difficulty: 2, question: "The noise from the construction site ____ me, so I couldn't focus on my work.", translation: "建築工地的噪音____我，所以我無法專心工作。", options: ["disturbed", "discovered", "displayed", "dismissed"], answer: 0, keywords: [
-                    { word: 'disturbed', translation: '打擾 (v. 過去式)', example: 'The noise disturbed him.', example_translation: '噪音打擾了他。' },
-                    { word: 'discovered', translation: '發現 (v. 過去式)', example: 'He discovered the truth.', example_translation: '他發現了真相。' },
-                    { word: 'displayed', translation: '展示 (v. 過去式)', example: 'They displayed the art.', example_translation: '他們展示了藝術品。' },
-                    { word: 'dismissed', translation: '解散；解雇 (v. 過去式)', example: 'The class was dismissed.', example_translation: '下課了。' }
-                ] }, // 111 統測
-                // 109 統測
-                { type: 'reading', difficulty: 2, question: "The handmade cookies in this bakery are very ____. They are sold out every day.", translation: "這家麵包店的手工餅乾非常____。它們每天都銷售一空。", options: ["patient", "popular", "public", "punctual"], answer: 1, keywords: [
-                    { word: 'patient', translation: '有耐心的；病人', example: 'You need to be patient.', example_translation: '你需要有耐心。' },
-                    { word: 'popular', translation: '受歡迎的', example: 'He is very popular.', example_translation: '他很受歡迎。' },
-                    { word: 'public', translation: '公眾的', example: 'This is a public park.', example_translation: '這是座公園。' },
-                    { word: 'punctual', translation: '準時的', example: 'Please be punctual.', example_translation: '請準時。' }
-                ] }, // 109 統測
-                // 110 統測
-                { type: 'reading', difficulty: 1, question: "Water is ____ for all living things; we cannot live without it.", translation: "水對所有生物都是____的；沒有水我們無法生存。", options: ["essential", "expensive", "extra", "equal"], answer: 0, keywords: [
-                    { word: 'essential', translation: '必要的；不可或缺的', example: 'Food is essential for life.', example_translation: '食物是生命所必需的。' },
-                    { word: 'expensive', translation: '昂貴的', example: 'This watch is expensive.', example_translation: '這隻手錶很貴。' },
-                    { word: 'extra', translation: '額外的', example: 'I need extra time.', example_translation: '我需要額外的時間。' },
-                    { word: 'equal', translation: '平等的', example: 'All people are equal.', example_translation: '人皆生而平等。' }
-                ] }, // 110 統測
-                // 112 統測
-                { type: 'reading', difficulty: 2, question: "This organization provides food and shelter for ____ people.", translation: "這個組織為____的人提供食物和住所。", options: ["hopeless", "homeless", "harmless", "helpful"], answer: 1, keywords: [
-                    { word: 'hopeless', translation: '絕望的', example: 'The situation is hopeless.', example_translation: '情況令人絕望。' },
-                    { word: 'homeless', translation: '無家可歸的', example: 'The city has many homeless people.', example_translation: '這城市有很多無家可歸的人。' },
-                    { word: 'harmless', translation: '無害的', example: 'The snake is harmless.', example_translation: '這條蛇無害。' },
-                    { word: 'helpful', translation: '有幫助的', example: 'Your advice was helpful.', example_translation: '你的建議很有幫助。' }
-                ] }, // 112 統測
-                // 108 統測
-                { type: 'reading', difficulty: 2, question: "Many factors can ____ a student's performance in school, such as health and study habits.", translation: "許多因素都會____學生的學校表現，例如健康和讀書習慣。", options: ["affect", "alarm", "apply", "attack"], answer: 0, keywords: [
-                    { word: 'affect', translation: '影響 (v.)', example: 'The weather affected his mood.', example_translation: '天氣影響了他的心情。' },
-                    { word: 'alarm', translation: '警報；使驚慌', example: 'The alarm clock rang.', example_translation: '鬧鐘響了。' },
-                    { word: 'apply', translation: '申請；應用', example: 'I will apply for the job.', example_translation: '我將申請這份工作。' },
-                    { word: 'attack', translation: '攻擊', example: 'The army will attack.', example_translation: '軍隊將發動攻擊。' }
-                ] }, // 107 統測
-            ],
-            phrases: [
-                // 112 統測
-                { type: 'reading', difficulty: 2, question: "My scooter broke down on the way to school, so I was ____ for my morning class.", translation: "我的摩托車在上學途中拋錨了，所以我早上的課____了。", options: ["on time", "late", "early", "in time"], answer: 1, keywords: [
-                    { word: 'on time', translation: '準時', example: 'The train arrived on time.', example_translation: '火車準時到達。' },
-                    { word: 'late', translation: '遲到', example: 'Don\'t be late for class.', example_translation: '上課不要遲到。' },
-                    { word: 'early', translation: '早到', example: 'He arrived early.', example_translation: '他提早到了。' },
-                    { word: 'in time', translation: '及時', example: 'He arrived just in time.', example_translation: '他剛好及時趕到。' }
-                ] }, // 112 統測
-                // 111 統測
-                { type: 'reading', difficulty: 2, question: "My grandmother is good at ____ children. They all like her.", translation: "我的祖母很擅長____小孩。他們都喜歡她。", options: ["looking for", "looking at", "looking after", "looking up"], answer: 2, keywords: [
-                    { word: 'looking for', translation: '尋找', example: 'I am looking for my keys.', example_translation: '我正在找我的鑰匙。' },
-                    { word: 'looking at', translation: '看著', example: 'She is looking at the photo.', example_translation: '她正在看著照片。' },
-                    { word: 'looking after', translation: '照顧', example: 'He is looking after the baby.', example_translation: '他正在照顧嬰兒。' },
-                    { word: 'looking up', translation: '查詢；仰望', example: 'Look up the word in the dictionary.', example_translation: '在字典裡查這個單字。' }
-                ] }, // 111 統測
-                // 110 統測
-                { type: 'reading', difficulty: 2, question: "The basketball game was ____ because of the heavy rain.", translation: "這場籃球賽因為大雨而____。", options: ["put off", "put on", "put up", "put out"], answer: 0, keywords: [
-                    { word: 'put off', translation: '延期', example: 'They put off the meeting.', example_translation: '他們延後了會議。' },
-                    { word: 'put on', translation: '穿上', example: 'Put on your coat.', example_translation: '穿上你的外套。' },
-                    { word: 'put up', translation: '舉起；建造', example: 'He put up his hand.', example_translation: '他舉起了手。' },
-                    { word: 'put out', translation: '熄滅', example: 'Put out the fire.', example_translation: '熄滅火。' }
-                ] }, // 110 統測
-                // 109 統測
-                { type: 'reading', difficulty: 2, question: "Joe ____ his parents in personality; he is as outgoing as they are.", translation: "Joe 在個性上____他的父母；他跟他們一樣外向。", options: ["looks after", "takes after", "tries on", "turns on"], answer: 1, keywords: [
-                    { word: 'looks after', translation: '照顧', example: 'She looks after her little brother.', example_translation: '她照顧她的弟弟。' },
-                    { word: 'takes after', translation: '與...相像', example: 'He takes after his father.', example_translation: '他長得很像他父親。' },
-                    { word: 'tries on', translation: '試穿', example: 'Try on these shoes.', example_translation: '試穿這雙鞋。' },
-                    { word: 'turns on', translation: '打開(電源)', example: 'Turn on the light.', example_translation: '打開燈。' }
-                ] }, // 109 統測
-                // 108 統測
-                { type: 'reading', difficulty: 2, question: "The movie is ____ a true story about a high school basketball team.", translation: "這部電影是____一個高中籃球隊的真實故事。", options: ["based on", "bored with", "famous for", "proud of"], answer: 0, keywords: [
-                    { word: 'based on', translation: '基於；根據', example: 'The film is based on a true story.', example_translation: '這部電影是根據真實故事改編的。' },
-                    { word: 'bored with', translation: '對...感到厭煩', example: 'I am bored with this game.', example_translation: '我對這個遊戲感到厭煩。' },
-                    { word: 'famous for', translation: '以...聞名', example: 'This city is famous for its food.', example_translation: '這座城市以美食聞名。' },
-                    { word: 'proud of', translation: '對...感到驕傲', example: 'I am proud of you.', example_translation: '我為你感到驕傲。' }
-                ] }, // 108 統測
-                // 112 統測
-                { type: 'reading', difficulty: 3, question: "When you are in trouble, you can always ____ your family for help.", translation: "當你遇到麻煩時，你總是能____你的家人尋求幫助。", options: ["count on", "get on", "live on", "pass on"], answer: 0, keywords: [
-                    { word: 'count on', translation: '依靠；指望', example: 'You can count on me.', example_translation: '你可以依靠我。' },
-                    { word: 'get on', translation: '上(車)', example: 'Get on the bus.', example_translation: '上公車。' },
-                    { word: 'live on', translation: '以...維生', example: 'He lives on a small salary.', example_translation: '他靠微薄的薪水維生。' },
-                    { word: 'pass on', translation: '傳遞', example: 'Pass on the message.', example_translation: '把訊息傳下去。' }
-                ] }, // 112 統測
-                // 111 統測
-                { type: 'reading', difficulty: 3, question: "Please don't ____ writing your report. The deadline is tomorrow.", translation: "請不要____寫你的報告。截止日期是明天。", options: ["put off", "put on", "put down", "put away"], answer: 0, keywords: [
-                    { word: 'put off', translation: '延期', example: 'Don\'t put off your homework.', example_translation: '不要拖延你的作業。' },
-                    { word: 'put on', translation: '穿上', example: 'Put on your jacket.', example_translation: '穿上你的夾克。' },
-                    { word: 'put down', translation: '放下；鎮壓', example: 'Put down the heavy box.', example_translation: '放下那個重箱子。' },
-                    { word: 'put away', translation: '收好', example: 'Put away your toys.', example_translation: '把你的玩具收好。' }
-                ] }, // 111 統測
-                // 110 統測
-                { type: 'reading', difficulty: 3, question: "I don't know this word. I need to ____ in the dictionary.", translation: "我不知道這個字。我需要____字典。", options: ["look it up", "look for it", "look at it", "look after it"], answer: 0, keywords: [
-                    { word: 'look it up', translation: '查詢 (it/受詞需放中間)', example: 'I will look the word up.', example_translation: '我會查這個單字。' },
-                    { word: 'look for it', translation: '尋找它', example: 'I am looking for my phone.', example_translation: '我正在找我的手機。' },
-                    { word: 'look at it', translation: '看著它', example: 'Look at the picture.', example_translation: '看著這張圖片。' },
-                    { word: 'look after it', translation: '照顧它', example: 'Can you look after my dog?', example_translation: '你能照顧我的狗嗎？' }
-                ] }, // 110 統測
-                // 109 統測
-                { type: 'reading', difficulty: 3, question: "I ____ my old friend at the train station yesterday. What a surprise!", translation: "我昨天在火車站____我的老朋友。真是驚喜！", options: ["ran into", "ran away", "ran out of", "ran over"], answer: 0, keywords: [
-                    { word: 'ran into', translation: '偶然遇見', example: 'I ran into Tom today.', example_translation: '我今天巧遇了湯姆。' },
-                    { word: 'ran away', translation: '逃跑', example: 'The thief ran away.', example_translation: '小偷跑走了。' },
-                    { word: 'ran out of', translation: '用完', example: 'We ran out of milk.', example_translation: '我們牛奶喝完了。' },
-                    { word: 'ran over', translation: '輾過', example: 'The car ran over a can.', example_translation: '車子輾過一個罐子。' }
-                ] }, // 109 統測
-                // 108 統測
-                { type: 'reading', difficulty: 3, question: "To stay healthy, you should eat a balanced diet and exercise ____.", translation: "為了保持健康，你應該均衡飲食並____運動。", options: ["at times", "at once", "all of a sudden", "on a regular basis"], answer: 3, keywords: [
-                    { word: 'at times', translation: '有時候', example: 'I feel lonely at times.', example_translation: '我有時候感到寂寞。' },
-                    { word: 'at once', translation: '立刻', example: 'Come here at once.', example_translation: '立刻過來。' },
-                    { word: 'all of a sudden', translation: '突然', example: 'All of a sudden, it started to rain.', example_translation: '突然下起雨來了。' },
-                    { word: 'on a regular basis', translation: '規律地', example: 'You should exercise on a regular basis.', example_translation: '你應該規律地運動。' }
-                ] }, // 108 統測
-                // 112 統測
-                { type: 'reading', difficulty: 2, question: "The weather is nice, so I ____ going for a walk in the park.", translation: "天氣很好，所以我____去公園散步。", options: ["look like", "sound like", "feel like", "smell like"], answer: 2, keywords: [
-                    { word: 'look like', translation: '看起來像', example: 'It looks like rain.', example_translation: '看起來快下雨了。' },
-                    { word: 'sound like', translation: '聽起來像', example: 'That sounds like a good idea.', example_translation: '那聽起來是個好主意。' },
-                    { word: 'feel like', translation: '想要', example: 'I feel like eating ice cream.', example_translation: '我想要吃冰淇淋。' },
-                    { word: 'smell like', translation: '聞起來像', example: 'It smells like cookies.', example_translation: '聞起來像餅乾。' }
-                ] }, // 112 統測
-                // 111 統測
-                { type: 'reading', difficulty: 3, question: "____ all the difficulties, he never gave up his dream of becoming a singer.", translation: "____所有困難，他從未放棄成為歌手的夢想。", options: ["Thanks to", "In spite of", "Instead of", "Because of"], answer: 1, keywords: [
-                    { word: 'Thanks to', translation: '幸虧；由於', example: 'Thanks to your help, I succeeded.', example_translation: '幸虧有你的幫助，我成功了。' },
-                    { word: 'In spite of', translation: '儘管', example: 'In spite of the rain, we went out.', example_translation: '儘管下雨，我們還是出去了。' },
-                    { word: 'Instead of', translation: '代替', example: 'He bought tea instead of coffee.', example_translation: '他買了茶而不是咖啡。' },
-                    { word: 'Because of', translation: '因為', example: 'We cancelled the trip because of the storm.', example_translation: '因為暴風雨，我們取消了旅行。' }
-                ] }, // 111 統測
-                // 110 統測
-                { type: 'reading', difficulty: 2, question: "You should ____ the lights when you leave the room to save energy.", translation: "當你離開房間時，你應該____電燈以節約能源。", options: ["turn off", "turn on", "turn into", "turn down"], answer: 0, keywords: [
-                    { word: 'turn off', translation: '關掉(電源)', example: 'Please turn off the TV.', example_translation: '請關掉電視。' },
-                    { word: 'turn on', translation: '打開(電源)', example: 'Turn on the radio.', example_translation: '打開收音機。' },
-                    { word: 'turn into', translation: '變成', example: 'The frog turned into a prince.', example_translation: '青蛙變成了王子。' },
-                    { word: 'turn down', translation: '拒絕；轉小聲', example: 'He turned down the offer.', example_translation: '他拒絕了那個提議。' }
-                ] }, // 110 統測
-                // 109 統測
-                { type: 'reading', difficulty: 3, question: "You have to work hard; ____, you will fail the course.", translation: "你必須努力用功；____，你會不及格這門課。", options: ["however", "otherwise", "likewise", "besides"], answer: 1, keywords: [
-                    { word: 'however', translation: '然而', example: 'He was tired; however, he kept working.', example_translation: '他很累，然而他繼續工作。' },
-                    { word: 'otherwise', translation: '否則', example: 'Study hard, otherwise you will fail.', example_translation: '努力讀書，否則你會不及格。' },
-                    { word: 'likewise', translation: '同樣地', example: 'She bought a hat, and I did likewise.', example_translation: '她買了頂帽子，我也一樣。' },
-                    { word: 'besides', translation: '此外', example: 'It\'s late; besides, I\'m tired.', example_translation: '天晚了，而且我也累了。' }
-                ] }, // 109 統測
-                // 108 統測
-                { type: 'reading', difficulty: 2, question: "My father used to read newspapers to ____ what was happening in the world.", translation: "我父親以前常常讀報紙來____世界上發生了什麼事。", options: ["find out", "get off", "take place", "look for"], answer: 0, keywords: [
-                    { word: 'find out', translation: '查明；發現', example: 'We need to find out the truth.', example_translation: '我們需要查明真相。' },
-                    { word: 'get off', translation: '下(車)', example: 'I get off at the next stop.', example_translation: '我下一站下車。' },
-                    { word: 'take place', translation: '舉行；發生', example: 'The meeting will take place on Monday.', example_translation: '會議將在週一舉行。' },
-                    { word: 'look for', translation: '尋找', example: 'What are you looking for?', example_translation: '你在找什麼？' }
-                ] }, // 108 統測
-            ],
-            final: [
-                // 20 NEW, UNIQUE QUESTIONS (Mixed Difficulty from past exams)
-                // --- Vocab ---
-                { type: 'reading', difficulty: 2, question: "It is ____ to see stars in the city at night because of the bright lights.", translation: "因為光害，晚上在城市裡很____能看到星星。", options: ["common", "rare", "local", "public"], answer: 1, keywords: [
-                    { word: 'common', translation: '常見的', example: 'It is common to see birds here.', example_translation: '在這裡看到鳥很常見。' },
-                    { word: 'rare', translation: '稀有的', example: 'This is a rare stamp.', example_translation: '這是一張稀有郵票。' },
-                    { word: 'local', translation: '當地的', example: 'He likes local food.', example_translation: '他喜歡當地食物。' },
-                    { word: 'public', translation: '公開的；公眾的', example: 'This is a public library.', example_translation: '這是間公立圖書館。' }
-                ] }, // 110 統測
-                { type: 'reading', difficulty: 2, question: "My smartphone is out of power. I need to find a ____ to charge it.", translation: "我的智慧型手機沒電了。我需要找一個____來充電。", options: ["charger", "channel", "chapter", "character"], answer: 0, keywords: [
-                    { word: 'charger', translation: '充電器', example: 'I lost my phone charger.', example_translation: '我弄丟了我的手機充電器。' },
-                    { word: 'channel', translation: '頻道；管道', example: 'Switch to channel 5.', example_translation: '切換到第五頻道。' },
-                    { word: 'chapter', translation: '章節', example: 'Read the next chapter.', example_translation: '閱讀下一章。' },
-                    { word: 'character', translation: '角色；性格', example: 'He has a good character.', example_translation: '他的性格很好。' }
-                ] }, // 111 統測 (Example, reused but okay for different pool)
-                { type: 'reading', difficulty: 3, question: "If you want to ____ in this competition, you must practice every day.", translation: "如果你想在這場比賽中____，你必須每天練習。", options: ["succeed", "select", "survive", "support"], answer: 0, keywords: [
-                    { word: 'succeed', translation: '成功', example: 'He will succeed.', example_translation: '他會成功的。' },
-                    { word: 'select', translation: '選擇', example: 'Please select one option.', example_translation: '請選擇一個選項。' },
-                    { word: 'survive', translation: '倖存', example: 'He survived the crash.', example_translation: '他在車禍中倖存下來。' },
-                    { word: 'support', translation: '支持', example: 'I support your decision.', example_translation: '我支持你的決定。' }
-                ] }, // 109 統測
-                { type: 'reading', difficulty: 2, question: "The ____ for tomorrow is sunny and warm. It's a good day for a picnic.", translation: "明天的天氣____是晴朗溫暖。這是個適合野餐的好日子。", options: ["forecast", "formula", "fortune", "foundation"], answer: 0, keywords: [
-                    { word: 'forecast', translation: '預報', example: 'What is the weather forecast?', example_translation: '天氣預報怎麼說？' },
-                    { word: 'formula', translation: '公式；配方', example: 'This is the formula for water.', example_translation: '這是水的化學式。' },
-                    { word: 'fortune', translation: '財富；運氣', example: 'He made a fortune.', example_translation: '他發了一筆財。' },
-                    { word: 'foundation', translation: '基礎；基金會', example: 'They built a strong foundation.', example_translation: '他們打下了堅實的基礎。' }
-                ] }, // 107 統測 (Example)
-                { type: 'reading', difficulty: 3, question: "The typhoon caused ____ floods in many parts of the island.", translation: "颱風在島上許多地區造成了____的洪水。", options: ["secure", "strict", "severe", "slight"], answer: 2, keywords: [
-                    { word: 'secure', translation: '安全的', example: 'The building is secure.', example_translation: '這棟建築很安全。' },
-                    { word: 'strict', translation: '嚴格的', example: 'He is a strict teacher.', example_translation: '他是個嚴格的老師。' },
-                    { word: 'severe', translation: '嚴重的', example: 'There was a severe storm.', example_translation: '有場嚴重的暴風雨。' },
-                    { word: 'slight', translation: '輕微的', example: 'I have a slight headache.', example_translation: '我有點輕微頭痛。' }
-                ] }, // 112 統測
-                { type: 'reading', difficulty: 2, question: "This restaurant is famous for its delicious food and excellent ____.", translation: "這間餐廳以其美味的食物和優質的____而聞名。", options: ["service", "surface", "system", "spirit"], answer: 0, keywords: [
-                    { word: 'service', translation: '服務', example: 'The service here is great.', example_translation: '這裡的服務很棒。' },
-                    { word: 'surface', translation: '表面', example: 'The surface is smooth.', example_translation: '這個表面很光滑。' },
-                    { word: 'system', translation: '系統', example: 'The computer system is down.', example_translation: '電腦系統掛了。' },
-                    { word: 'spirit', translation: '精神；靈魂', example: 'She has a free spirit.', example_translation: '她有自由的精神。' }
-                ] }, // 108 統測
-                { type: 'reading', difficulty: 3, question: "You must get your parents' ____ before you can go on the school trip.", translation: "你必須先得到父母的____才能參加學校旅行。", options: ["permission", "persuasion", "possession", "pollution"], answer: 0, keywords: [
-                    { word: 'permission', translation: '許可', example: 'He asked for permission to leave.', example_translation: '他請求准許離開。' },
-                    { word: 'persuasion', translation: '說服', example: 'She used her power of persuasion.', example_translation: '她運用了她的說服力。' },
-                    { word: 'possession', translation: '擁有；財產', example: 'The house is his possession.', example_translation: '這棟房子是他的財產。' },
-                    { word: 'pollution', translation: '污染', example: 'Air pollution is a problem.', example_translation: '空氣污染是個問題。' }
-                ] }, // 109 統測
-                { type: 'reading', difficulty: 2, question: "The instructions for this machine are too ____. I can't understand them.", translation: "這台機器的說明書太____了。我看不懂。", options: ["complicated", "comfortable", "competitive", "complaining"], answer: 0, keywords: [
-                    { word: 'complicated', translation: '複雜的', example: 'The rules are very complicated.', example_translation: '規則很複雜。' },
-                    { word: 'comfortable', translation: '舒服的', example: 'This sofa is comfortable.', example_translation: '這沙發很舒服。' },
-                    { word: 'competitive', translation: '有競爭力的', example: 'He is very competitive.', example_translation: '他非常好勝。' },
-                    { word: 'complaining', translation: '抱怨 (v-ing)', example: 'He is always complaining.', example_translation: '他總是在抱怨。' }
-                ] }, // 108 統測
-                { type: 'reading', difficulty: 3, question: "Global warming is a ____ problem that affects every country in the world.", translation: "全球暖化是一個影響世界上每個國家的____問題。", options: ["general", "generous", "global", "gradual"], answer: 2, keywords: [
-                    { word: 'general', translation: '一般的', example: 'This is a general rule.', example_translation: '這是一般通則。' },
-                    { word: 'generous', translation: '慷慨的', example: 'He is very generous.', example_translation: '他非常慷慨。' },
-                    { word: 'global', translation: '全球的', example: 'This is a global issue.', example_translation: '這是個全球性議題。' },
-                    { word: 'gradual', translation: '逐漸的', example: 'It was a gradual change.', example_translation: '這是一個漸進的改變。' }
-                ] }, // 111 統測
-                { type: 'reading', difficulty: 1, question: "My favorite ____ is summer because I can go swimming.", translation: "我最喜歡的____是夏天，因為我可以去游泳。", options: ["season", "reason", "second", "subject"], answer: 0, keywords: [
-                    { word: 'season', translation: '季節', example: 'Spring is my favorite season.', example_translation: '春天是我最愛的季節。' },
-                    { word: 'reason', translation: '理由', example: 'What is the reason?', example_translation: '理由是什麼？' },
-                    { word: 'second', translation: '秒；第二', example: 'Wait a second.', example_translation: '等一下。' },
-                    { word: 'subject', translation: '主題；科目', example: 'Math is my favorite subject.', example_translation: '數學是我最愛的科目。' }
-                ] }, // 107 統測
-                // --- Phrases ---
-                { type: 'reading', difficulty: 2, question: "Students are not allowed to ____ on exams. It's dishonest.", translation: "學生考試不准____。這是不誠實的。", options: ["give up", "look for", "chat", "cheat"], answer: 3, keywords: [ // Note: This is a vocab word but fits the context. I'll add more phrases.
-                    { word: 'give up', translation: '放棄', example: 'Never give up.', example_translation: '永不放棄。' },
-                    { word: 'look for', translation: '尋找', example: 'I am looking for my keys.', example_translation: '我正在找鑰匙。' },
-                    { word: 'chat', translation: '聊天', example: 'I chatted with my friend.', example_translation: '我和朋友聊天。' },
-                    { word: 'cheat', translation: '作弊', example: 'It is wrong to cheat.', example_translation: '作弊是錯的。' }
-                ] }, // 107 統測
-                { type: 'reading', difficulty: 2, question: "My father used to read newspapers to ____ what was happening in the world.", translation: "我父親以前常常讀報紙來____世界上發生了什麼事。", options: ["find out", "get off", "take place", "look for"], answer: 0, keywords: [
-                    { word: 'find out', translation: '查明；發現', example: 'We need to find out the truth.', example_translation: '我們需要查明真相。' },
-                    { word: 'get off', translation: '下(車)', example: 'I get off at the next stop.', example_translation: '我下一站下車。' },
-                    { word: 'take place', translation: '舉行；發生', example: 'The meeting will take place on Monday.', example_translation: '會議將在週一舉行。' },
-                    { word: 'look for', translation: '尋找', example: 'What are you looking for?', example_translation: '你在找什麼？' }
-                ] }, // 108 統測
-                { type: 'reading', difficulty: 2, question: "I ____ my old friend at the train station yesterday. What a surprise!", translation: "我昨天在火車站____我的老朋友。真是驚喜！", options: ["ran into", "ran away", "ran out of", "ran over"], answer: 0, keywords: [
-                    { word: 'ran into', translation: '偶然遇見', example: 'I ran into Tom today.', example_translation: '我今天巧遇了湯姆。' },
-                    { word: 'ran away', translation: '逃跑', example: 'The thief ran away.', example_translation: '小偷跑走了。' },
-                    { word: 'ran out of', translation: '用完', example: 'We ran out of milk.', example_translation: '我們牛奶喝完了。' },
-                    { word: 'ran over', translation: '輾過', example: 'The car ran over a can.', example_translation: '車子輾過一個罐子。' }
-                ] }, // 109 統測
-                { type: 'reading', difficulty: 2, question: "You should ____ the lights when you leave the room to save energy.", translation: "當你離開房間時，你應該____電燈以節約能源。", options: ["turn off", "turn on", "turn into", "turn down"], answer: 0, keywords: [
-                    { word: 'turn off', translation: '關掉(電源)', example: 'Please turn off the TV.', example_translation: '請關掉電視。' },
-                    { word: 'turn on', translation: '打開(電源)', example: 'Turn on the radio.', example_translation: '打開收音機。' },
-                    { word: 'turn into', translation: '變成', example: 'The frog turned into a prince.', example_translation: '青蛙變成了王子。' },
-                    { word: 'turn down', translation: '拒絕；轉小聲', example: 'He turned down the offer.', example_translation: '他拒絕了那個提議。' }
-                ] }, // 110 統測
-                { type: 'reading', difficulty: 2, question: "My grandmother is good at ____ children. They all like her.", translation: "我的祖母很擅長____小孩。他們都喜歡她。", options: ["looking for", "looking at", "looking after", "looking up"], answer: 2, keywords: [
-                    { word: 'looking for', translation: '尋找', example: 'I am looking for my keys.', example_translation: '我正在找我的鑰匙。' },
-                    { word: 'looking at', translation: '看著', example: 'She is looking at the photo.', example_translation: '她正在看著照片。' },
-                    { word: 'looking after', translation: '照顧', example: 'He is looking after the baby.', example_translation: '他正在照顧嬰兒。' },
-                    { word: 'looking up', translation: '查詢；仰望', example: 'Look up the word in the dictionary.', example_translation: '在字典裡查這個單字。' }
-                ] }, // 111 統測
-                { type: 'reading', difficulty: 2, question: "When you are in trouble, you can always ____ your family for help.", translation: "當你遇到麻煩時，你總是能____你的家人尋求幫助。", options: ["count on", "get on", "live on", "pass on"], answer: 0, keywords: [
-                    { word: 'count on', translation: '依靠；指望', example: 'You can count on me.', example_translation: '你可以依靠我。' },
-                    { word: 'get on', translation: '上(車)', example: 'Get on the bus.', example_translation: '上公車。' },
-                    { word: 'live on', translation: '以...維生', example: 'He lives on a small salary.', example_translation: '他靠微薄的薪水維生。' },
-                    { word: 'pass on', translation: '傳遞', example: 'Pass on the message.', example_translation: '把訊息傳下去。' }
-                ] }, // 112 統測
-                { type: 'reading', difficulty: 3, question: "To stay healthy, you should eat a balanced diet and exercise ____.", translation: "為了保持健康，你應該均衡飲食並____運動。", options: ["at times", "at once", "all of a sudden", "on a regular basis"], answer: 3, keywords: [
-                    { word: 'at times', translation: '有時候', example: 'I feel lonely at times.', example_translation: '我有時候感到寂寞。' },
-                    { word: 'at once', translation: '立刻', example: 'Come here at once.', example_translation: '立刻過來。' },
-                    { word: 'all of a sudden', translation: '突然', example: 'All of a sudden, it started to rain.', example_translation: '突然下起雨來了。' },
-                    { word: 'on a regular basis', translation: '規律地', example: 'You should exercise on a regular basis.', example_translation: '你應該規律地運動。' }
-                ] }, // 108 統測
-                { type: 'reading', difficulty: 3, question: "You have to work hard; ____, you will fail the course.", translation: "你必須努力用功；____，你會不及格這門課。", options: ["however", "otherwise", "likewise", "besides"], answer: 1, keywords: [
-                    { word: 'however', translation: '然而', example: 'He was tired; however, he kept working.', example_translation: '他很累，然而他繼續工作。' },
-                    { word: 'otherwise', translation: '否則', example: 'Study hard, otherwise you will fail.', example_translation: '努力讀書，否則你會不及格。' },
-                    { word: 'likewise', translation: '同樣地', example: 'She bought a hat, and I did likewise.', example_translation: '她買了頂帽子，我也一樣。' },
-                    { word: 'besides', translation: '此外', example: 'It\'s late; besides, I\'m tired.', example_translation: '天晚了，而且我也累了。' }
-                ] }, // 109 統測
-                { type: 'reading', difficulty: 3, question: "I don't know this word. I need to ____ in the dictionary.", translation: "我不知道這個字。我需要____字典。", options: ["look it up", "look for it", "look at it", "look after it"], answer: 0, keywords: [
-                    { word: 'look it up', translation: '查詢 (it/受詞需放中間)', example: 'I will look the word up.', example_translation: '我會查這個單字。' },
-                    { word: 'look for it', translation: '尋找它', example: 'I am looking for my phone.', example_translation: '我正在找我的手機。' },
-                    { word: 'look at it', translation: '看著它', example: 'Look at the picture.', example_translation: '看著這張圖片。' },
-                    { word: 'look after it', translation: '照顧它', example: 'Can you look after my dog?', example_translation: '你能照顧我的狗嗎？' }
-                ] }, // 110 統測
-                { type: 'reading', difficulty: 3, question: "____ all the difficulties, he never gave up his dream of becoming a singer.", translation: "____所有困難，他從未放棄成為歌手的夢想。", options: ["Thanks to", "In spite of", "Instead of", "Because of"], answer: 1, keywords: [
-                    { word: 'Thanks to', translation: '幸虧；由於', example: 'Thanks to your help, I succeeded.', example_translation: '幸虧有你的幫助，我成功了。' },
-                    { word: 'In spite of', translation: '儘管', example: 'In spite of the rain, we went out.', example_translation: '儘管下雨，我們還是出去了。' },
-                    { word: 'Instead of', translation: '代替', example: 'He bought tea instead of coffee.', example_translation: '他買了茶而不是咖啡。' },
-                    { word: 'Because of', translation: '因為', example: 'We cancelled the trip because of the storm.', example_translation: '因為暴風雨，我們取消了旅行。' }
-                ] }, // 111 統測
-            ]
+            practice: allPracticeQuestions
         };
+
 
         // --- STATE MANAGEMENT ---
         let currentTest = '';
         let currentQuestions = [];
         let currentQuestionIndex = 0;
-        let score = 0; // Simplified score for single-type tests
+        let score = 0; // Simplified score
         let timerInterval;
-        let diagnosticResults = null; // Set to null as we removed diagnostic
+        let currentTimerValue = 0; // NEW: For timer pause
+        let isTestPaused = false; // NEW: For timer pause
+        let diagnosticResults = null;
         let learnedKeywords = [];
         let favoriteKeywords = []; // NEW: For favorites
-        // let learnedSentences = []; // No longer need sentences from listening
-        let finalScoreForCert = 0;
-        let vocabModulePassed = false;
-        let phrasesModulePassed = false;
-
+        
         // --- UI ELEMENTS ---
         const screens = document.querySelectorAll('.screen');
         const testTitle = document.getElementById('test-title');
@@ -592,7 +356,10 @@
         const difficultyActions = document.getElementById('difficulty-actions');
         const postAnswerActions = document.getElementById('post-answer-actions');
         const postAnswerDisplay = document.getElementById('post-answer-display');
-        const keywordsDisplay = document.getElementById('keywords-display'); // Get the new element
+        const keywordsDisplay = document.getElementById('keywords-display');
+        const favoritesModal = document.getElementById('favorites-modal');
+        const favoritesCard = document.getElementById('favorites-card');
+        const favoritesList = document.getElementById('favorites-list');
 
         // --- SOUND EFFECTS ---
         let soundsReady = false;
@@ -607,16 +374,8 @@
                     synth.triggerAttackRelease("C4", "8n", Tone.now());
                     synth.triggerAttackRelease("E4", "8n", Tone.now() + 0.1);
                     synth.triggerAttackRelease("G4", "8n", Tone.now() + 0.2);
-                } else if (type === 'achievement') {
-                    synth.triggerAttackRelease("C5", "8n", Tone.now());
-                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.1);
-                    synth.triggerAttackRelease("C6", "8n", Tone.now() + 0.2);
-                } else if (type === 'congratulations') {
-                    synth.triggerAttackRelease("C5", "8n", Tone.now());
-                    synth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
-                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
-                    synth.triggerAttackRelease("C6", "8n", Tone.now() + 0.3);
-                }
+                } 
+                // Removed achievement and congratulations sounds
             } catch(e) {
                 console.error("Sound play failed:", e);
             }
@@ -631,33 +390,7 @@
         }, { once: true });
 
 
-        // --- ACHIEVEMENTS ---
-        const achievementData = {
-            vocabPro: { name: '單字達人', desc: '在單字練習中達到100%正確率', unlocked: false, icon: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-cyan-300"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>` },
-            phrasesPro: { name: '片語高手', desc: '在片語練習中達到100%正確率', unlocked: false, icon: `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>` },
-        };
-
-        const achievementModal = document.getElementById('achievement-modal');
-        const achievementCard = document.getElementById('achievement-card');
-
-        function unlockAchievement(id) {
-            if (!achievementData[id] || achievementData[id].unlocked) return;
-            
-            achievementData[id].unlocked = true;
-            playSound('achievement');
-
-            document.getElementById('achievement-icon').innerHTML = achievementData[id].icon;
-            document.getElementById('achievement-name').textContent = achievementData[id].name;
-            document.getElementById('achievement-desc').textContent = achievementData[id].desc;
-            
-            achievementModal.style.display = 'flex';
-            setTimeout(() => achievementCard.classList.add('active'), 10);
-            setTimeout(() => {
-                achievementCard.classList.remove('active');
-                setTimeout(() => achievementModal.style.display = 'none', 500);
-            }, 3000);
-        }
-
+        // --- ACHIEVEMENTS (Removed) ---
         // --- CORE LOGIC ---
         function showScreen(screenId) {
             screens.forEach(s => s.style.display = 'none');
@@ -668,76 +401,55 @@
 
         function resetState() {
             currentQuestionIndex = 0;
-            score = 0; // Reset simplified score
+            score = 0; 
             clearInterval(timerInterval);
             learnedKeywords = [];
-            // learnedSentences = []; // No longer needed
-            finalScoreForCert = 0;
-            // Favorites are NOT reset here
+            isTestPaused = false;
+            currentTimerValue = 0;
+            // Favorites are NOT reset
         }
         
-        function startTest(testType) {
+        function startPracticeTest() {
+            startTest('practice');
+        }
+
+        function startTest(testType) { // testType will always be 'practice'
             resetState();
             currentTest = testType;
             
             let tempQuestions = [...questions[testType]];
             
-            // For training modules, sample 15 questions from the pool
-            if (testType === 'vocab' || testType === 'phrases') {
-                for (let i = tempQuestions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [tempQuestions[i], tempQuestions[j]] = [tempQuestions[j], tempQuestions[i]];
-                }
-                currentQuestions = tempQuestions.slice(0, 15);
-            } else {
-                 // For final, use all questions but shuffled
-                 for (let i = tempQuestions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [tempQuestions[i], tempQuestions[j]] = [tempQuestions[j], tempQuestions[i]];
-                }
-                currentQuestions = tempQuestions;
+            // Shuffle
+            for (let i = tempQuestions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tempQuestions[i], tempQuestions[j]] = [tempQuestions[j], tempQuestions[i]];
             }
+            currentQuestions = tempQuestions.slice(0, 30); // Sample 30
 
             const titles = { 
-                vocab: '單字題練習 / Vocab Training', 
-                phrases: '片語題練習 / Phrases Training', 
-                final: '模擬測驗 / Final Test' 
+                practice: '歷屆考題練習 (30 題)' 
             };
             testTitle.textContent = titles[testType];
             
             loadQuestion();
-            startTimer(currentQuestions.length * 45); // 45 seconds per question
+            startTimer(currentQuestions.length * 45); // 30 * 45 seconds
             showScreen('test-screen');
         }
-
-        function startMission() {
-            vocabModulePassed = false;
-            phrasesModulePassed = false;
-            diagnosticResults = null; // Mark that diagnostic was skipped
-            showTrainingHub();
-        }
-
-        function startTraining(moduleType) { startTest(moduleType); }
-        function startFinalChallenge() { startTest('final'); }
-
-        // This function is no longer needed to determine score category
-        // function getQuestionCategory(type) { ... }
 
         function loadQuestion() {
             nextButton.disabled = true;
             optionsContainer.innerHTML = '';
-            audioPlayerContainer.innerHTML = ''; // Clear audio player
-            difficultyActions.innerHTML = '';
+            audioPlayerContainer.innerHTML = ''; 
+            difficultyActions.innerHTML = ''; // Difficulty change is removed
             postAnswerActions.innerHTML = '';
             postAnswerDisplay.innerHTML = '';
-            keywordsDisplay.innerHTML = ''; // Clear keywords display on new question
+            keywordsDisplay.innerHTML = ''; 
 
             const q = currentQuestions[currentQuestionIndex];
             const progress = ((currentQuestionIndex) / currentQuestions.length) * 100;
             progressBar.style.width = `${progress}%`;
             questionCounter.textContent = `第 ${currentQuestionIndex + 1} / ${currentQuestions.length} 題`;
 
-            // All questions are 'reading' type now
             questionText.textContent = q.question;
             
             q.options.forEach((option, index) => {
@@ -747,49 +459,6 @@
                 button.onclick = () => selectAnswer(index);
                 optionsContainer.appendChild(button);
             });
-
-            // Difficulty change logic for training modules
-            if (currentTest === 'vocab' || currentTest === 'phrases') {
-                const sourcePool = questions[currentTest]; // Get from the correct pool
-                const existingQuestionTexts = new Set(currentQuestions.map(cq => cq.question));
-
-                const hasEasier = sourcePool.some(p => p.difficulty < q.difficulty && !existingQuestionTexts.has(p.question));
-                if (hasEasier) {
-                    const easierButton = document.createElement('button');
-                    easierButton.textContent = '換一題簡單點的';
-                    easierButton.className = 'bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm';
-                    easierButton.onclick = () => changeDifficulty('easier');
-                    difficultyActions.appendChild(easierButton);
-                }
-
-                const hasHarder = sourcePool.some(p => p.difficulty > q.difficulty && !existingQuestionTexts.has(p.question));
-                if (hasHarder) {
-                    const harderButton = document.createElement('button');
-                    harderButton.textContent = '挑戰難一點的';
-                    harderButton.className = 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm';
-                    harderButton.onclick = () => changeDifficulty('harder');
-                    difficultyActions.appendChild(harderButton);
-                }
-            }
-        }
-
-        function changeDifficulty(direction) {
-            const q = currentQuestions[currentQuestionIndex];
-            const sourcePool = questions[currentTest]; // Use current test pool
-            const existingQuestionTexts = new Set(currentQuestions.map(cq => cq.question));
-
-            let candidates;
-            if (direction === 'easier') {
-                candidates = sourcePool.filter(p => p.difficulty < q.difficulty && !existingQuestionTexts.has(p.question));
-            } else {
-                candidates = sourcePool.filter(p => p.difficulty > q.difficulty && !existingQuestionTexts.has(p.question));
-            }
-
-            if (candidates.length > 0) {
-                const newQuestion = candidates[Math.floor(Math.random() * candidates.length)];
-                currentQuestions[currentQuestionIndex] = newQuestion;
-                loadQuestion();
-            }
         }
         
         function selectAnswer(selectedIndex) {
@@ -798,7 +467,7 @@
             const isCorrect = selectedIndex === q.answer;
             
             if (isCorrect) {
-                score++; // Add to the simplified score
+                score++; 
             }
             playSound(isCorrect ? 'correct' : 'incorrect');
 
@@ -810,11 +479,9 @@
             });
 
             postAnswerActions.innerHTML = '';
-            postAnswerDisplay.innerHTML = ''; // Clear display
-            keywordsDisplay.innerHTML = ''; // Clear display
+            postAnswerDisplay.innerHTML = ''; 
+            keywordsDisplay.innerHTML = ''; 
 
-            // --- NEW: Add Question Translation Flip Card ---
-            // We use replace to fill in the blank with the correct answer for review
             const correctOptionText = q.options[q.answer];
             const filledQuestion = q.question.replace(/____/g, `<span class='font-bold text-yellow-300'>${correctOptionText}</span>`);
             const filledTranslation = q.translation.replace(/____/g, `<span class='font-bold text-cyan-300'>${correctOptionText}</span>`);
@@ -830,9 +497,6 @@
                     <p style="display:none;" class="mt-1 text-gray-400">${filledTranslation}</p>
                 </div>
             `;
-            // --- END NEW ---
-
-            // Removed the 'Show Transcript' button logic for listening questions
 
             if (q.keywords && q.keywords.length > 0) {
                 q.keywords.forEach(kw => learnedKeywords.push(kw));
@@ -845,16 +509,11 @@
                     q.keywords.forEach(kw => {
                         const escapedWord = kw.word.replace(/'/g, "\\'");
                         const escapedExample = kw.example.replace(/'/g, "\\'");
-
-                        // Check if already favorited
                         const isFavorited = favoriteKeywords.some(favKw => favKw.word === kw.word);
                         const favIconHTML = isFavorited
                             ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>`
                             : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.06l-7.682-7.378a4.5 4.5 0 010-6.364z" /></svg>`;
-                        
-                        // Stringify the keyword object for the onclick handler
                         const kwString = JSON.stringify(kw).replace(/'/g, "\\'");
-
 
                         keywordsHTML += `
                             <div class="p-4 bg-gray-900 rounded-lg border border-gray-700">
@@ -883,7 +542,7 @@
                         `;
                     });
                     keywordsHTML += '</div>';
-                    keywordsDisplay.innerHTML = keywordsHTML; // MODIFIED: Populate keywordsDisplay
+                    keywordsDisplay.innerHTML = keywordsHTML; 
                 };
                 postAnswerActions.appendChild(keywordsButton);
             }
@@ -915,155 +574,26 @@
             progressBar.style.width = '100%';
             
             const results = calculateScores(currentQuestions, score);
-
-            if (currentTest === 'final') {
-                showFinalReport(results);
-            } else if (currentTest === 'vocab' || currentTest === 'phrases') {
-                if (results.totalAccuracy >= 80) {
-                     if (currentTest === 'vocab') vocabModulePassed = true;
-                     if (currentTest === 'phrases') phrasesModulePassed = true;
-                }
-                showModuleComplete(results);
-            }
+            showPracticeComplete(results);
         }
         
-        function showDiagnosticResults() {
-            // This function is no longer called in the main flow
-        }
-
-        function showTrainingHub() {
-            const basicCard = document.getElementById('vocab-module-card');
-            const advancedCard = document.getElementById('phrases-module-card');
-            
-            const basicTitle = basicCard.querySelector('h3');
-            const advancedTitle = advancedCard.querySelector('h3');
-            basicTitle.innerHTML = '單字題 (15 題)';
-            advancedTitle.innerHTML = '片語題 (15 題)';
-
-            if(vocabModulePassed) {
-                basicTitle.innerHTML += ' <span class="text-green-400">✓</span>';
-            }
-            if(phrasesModulePassed) {
-                advancedTitle.innerHTML += ' <span class="text-green-400">✓</span>';
-            }
-
-            basicCard.classList.remove('border-yellow-400', 'scale-105');
-            advancedCard.classList.remove('border-yellow-400', 'scale-105');
-            
-            const finalChallengeButton = document.getElementById('final-challenge-button');
-            const unlockMsg = document.getElementById('final-challenge-unlock-msg');
-
-            if (vocabModulePassed && phrasesModulePassed) {
-                finalChallengeButton.disabled = false;
-                finalChallengeButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                finalChallengeButton.classList.add('hover:bg-red-700', 'transform', 'hover:scale-105');
-                unlockMsg.textContent = '所有練習已通過，可以進行模擬測驗！ / All training passed. Ready for the Final Test!';
-                unlockMsg.classList.remove('text-yellow-400');
-                unlockMsg.classList.add('text-green-400');
-            } else {
-                finalChallengeButton.disabled = true;
-                finalChallengeButton.classList.add('opacity-50', 'cursor-not-allowed');
-                finalChallengeButton.classList.remove('hover:bg-red-700', 'transform', 'hover:scale-105');
-                unlockMsg.textContent = '請先通過 (80%) 單字題與片語題模組 / Please pass both modules (80%) first.';
-                unlockMsg.classList.add('text-yellow-400');
-                unlockMsg.classList.remove('text-green-400');
-            }
-
-            showScreen('training-hub-screen');
-        }
-        
-        function showModuleComplete(results) {
-            const moduleName = { vocab: '單字題練習', phrases: '片語題練習' }[currentTest];
+        function showPracticeComplete(results) {
             const titleEl = document.getElementById('module-complete-title');
             const messageEl = document.getElementById('module-complete-message');
-
-            if (results.totalAccuracy >= 80) {
-                titleEl.textContent = "練習通過！ / Module Passed!";
-                titleEl.classList.remove('text-red-400');
-                titleEl.classList.add('text-green-400');
-                messageEl.textContent = `恭喜！你已通過「${moduleName}」！ / Congratulations! You passed the "${moduleName}"!`;
-                playSound('success');
-                if (results.totalAccuracy === 100) {
-                    if (currentTest === 'vocab') unlockAchievement('vocabPro');
-                    if (currentTest === 'phrases') unlockAchievement('phrasesPro');
-                }
-            } else {
-                titleEl.textContent = "練習未通過 / Module Failed";
-                titleEl.classList.remove('text-green-400');
-                titleEl.classList.add('text-red-400');
-                messageEl.textContent = `再接再厲！你尚未通過「${moduleName}」。 (需達 80%)`;
-                playSound('incorrect');
-            }
+            
+            titleEl.textContent = "練習完成！ / Practice Complete!";
+            titleEl.classList.remove('text-red-400'); // Just in case
+            titleEl.classList.add('text-green-400');
+            messageEl.textContent = `你答對了 ${results.totalCorrect} / ${results.totalQuestions} 題。`;
+            playSound('success');
             
             document.getElementById('module-score').textContent = `${results.totalCorrect} / ${results.totalQuestions} (${results.totalAccuracy}%)`;
-            showScreen('module-complete-screen');
+            showScreen('practice-complete-screen');
         }
-
-        function showFinalReport(finalResults) {
-            finalScoreForCert = finalResults.totalAccuracy;
-            
-            const certSection = document.getElementById('certificate-section');
-            const finalActions = document.getElementById('final-actions-container');
-            const comparisonContainer = document.getElementById('comparison-container');
-            const retryButton = document.getElementById('retry-final-button');
-
-            comparisonContainer.style.display = 'none'; // Ensure comparison chart is hidden
-            
-            if (finalScoreForCert >= 80) {
-                playSound('congratulations');
-                certSection.style.display = 'block';
-                finalActions.style.display = 'none';
-            } else {
-                playSound('success');
-                certSection.style.display = 'none';
-                finalActions.style.display = 'flex';
-                retryButton.style.display = 'block'; // Ensure retry button is visible on fail
-            }
-
-            // Updated ranks
-            let rank = '潛力新星';
-            if (finalScoreForCert >= 95) rank = '滿級分高手';
-            else if (finalScoreForCert >= 80) rank = '字彙達人';
-            else if (finalScoreForCert >= 60) rank = '合格考生';
-            document.getElementById('final-rank-title').textContent = rank;
-            
-            const summaryContainer = document.getElementById('final-summary-text');
-            let summaryText = `你的最終成績為 ${finalScoreForCert}% (${finalResults.totalCorrect} / ${finalResults.totalQuestions})。`;
-            let encouragementText = '';
-            
-            if (finalScoreForCert >= 80) {
-                encouragementText = '表現非常出色！你已經達到了精熟水準。持續精進，維持最佳狀態！';
-            } else {
-                encouragementText = '每一次的挑戰都是寶貴的經驗。別氣餒，這次的練習讓你更了解自己的方向，下次一定會更進步！';
-            }
-
-            summaryContainer.innerHTML = `<p class="text-base sm:text-lg text-gray-300">${summaryText}</p><p class="mt-2 text-lg sm:text-xl font-bold text-yellow-300">${encouragementText}</p>`;
-
-            const badgesContainer = document.getElementById('unlocked-badges');
-            badgesContainer.innerHTML = ''; 
-            let badgesFound = false;
-            for (const key in achievementData) {
-                if (achievementData[key].unlocked) {
-                    badgesFound = true;
-                    const badgeEl = document.createElement('div');
-                    badgeEl.className = 'flex flex-col items-center p-2 bg-gray-700 rounded-lg w-24';
-                    badgeEl.innerHTML = `<div class="badge-icon badge-icon-sm">${achievementData[key].icon}</div><p class="text-xs mt-1 text-gray-300">${achievementData[key].name}</p>`;
-                    badgesContainer.appendChild(badgeEl);
-                }
-            }
-            if (!badgesFound) badgesContainer.innerHTML = `<p class="text-gray-500">本次未獲得新勳章。</p>`;
-
-            showScreen('final-report-screen');
-        }
-
-        function retryModule() { startTest(currentTest); }
 
         function restartMission() {
-            vocabModulePassed = false;
-            phrasesModulePassed = false;
             diagnosticResults = null;
             favoriteKeywords = []; // Clear favorites on full restart
-            for (const key in achievementData) achievementData[key].unlocked = false;
             showScreen('welcome-screen');
         }
 
@@ -1075,234 +605,123 @@
             window.speechSynthesis.speak(utterance);
         }
 
+        // --- NEW Timer Functions with Pause/Resume ---
         function startTimer(duration) {
-            let timer = duration;
-            const updateTimer = () => {
-                const minutes = Math.floor(timer / 60);
-                let seconds = timer % 60;
-                seconds = seconds < 10 ? '0' + seconds : seconds;
-                timerDisplay.textContent = `${minutes}:${seconds}`;
-                if (--timer < 0) {
-                    clearInterval(timerInterval);
-                    timerDisplay.textContent = '0:00';
-                    endTest();
-                }
-            };
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 1000);
+            currentTimerValue = duration;
+            updateTimerDisplay(); // Set initial display
+            clearInterval(timerInterval); // Clear any existing
+            timerInterval = setInterval(runTimerTick, 1000);
         }
 
-        function generateSummaryReport() {
-            const uniqueKeywords = Array.from(new Map(learnedKeywords.map(kw => [kw.word, kw])).values());
+        function runTimerTick() {
+            if (isTestPaused) return; // Don't tick if paused
             
-            let keywordsHTML = '';
-            if (uniqueKeywords.length === 0) {
-                keywordsHTML = '<p class="text-gray-600">本次練習中沒有遇到附帶說明的關鍵單字。</p>';
-            } else {
-                uniqueKeywords.forEach(kw => {
-                    keywordsHTML += `
-                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-3">
-                            <p class="text-lg font-bold text-teal-700">${kw.word}</p>
-                            <p class="text-gray-600">${kw.translation}</p>
-                            <p class="mt-2 text-sm text-gray-500 italic">用法: ${kw.example}</p>
-                            <p class="mt-1 text-sm text-gray-500 italic">翻譯: ${kw.example_translation}</p>
-                        </div>
-                    `;
-                });
+            currentTimerValue--;
+            updateTimerDisplay();
+            
+            if (currentTimerValue < 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = '0:00';
+                endTest();
             }
-
-            // --- NEW: Favorites Section ---
-            let favoritesHTML = '';
-            // Ensure unique favorites, just in case
-            const uniqueFavorites = Array.from(new Map(favoriteKeywords.map(kw => [kw.word, kw])).values());
-            
-            if (uniqueFavorites.length === 0) {
-                favoritesHTML = '<p class="text-gray-600">您尚未收藏任何單字。</p>';
-            } else {
-                uniqueFavorites.forEach(kw => {
-                    favoritesHTML += `
-                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200 mb-3">
-                            <p class="text-lg font-bold text-yellow-700">${kw.word}</p>
-                            <p class="text-gray-600">${kw.translation}</p>
-                            <p class="mt-2 text-sm text-gray-500 italic">用法: ${kw.example}</p>
-                            <p class="mt-1 text-sm text-gray-500 italic">翻譯: ${kw.example_translation}</p>
-                        </div>
-                    `;
-                });
-            }
-            // --- END NEW ---
-
-            // Removed 'sentencesHTML' logic as there are no listening questions
-
-            const reportHTML = `
-                <html>
-                <head>
-                    <title>統測英文 學習總結報告</title>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
-                     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-                    <style>
-                        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
-                        @media print {
-                            body { -webkit-print-color-adjust: exact; }
-                            .no-print { display: none; }
-                        }
-                    </style>
-                </head>
-                <body class="bg-gray-100">
-                    <div class="max-w-4xl mx-auto my-12 p-8 bg-white rounded-lg shadow-xl">
-                        <div class="text-center border-b-2 border-gray-200 pb-4 mb-6">
-                            <h1 class="text-4xl font-bold text-gray-800">統測英文 學習總結報告</h1>
-                            <p class="text-lg text-gray-500">Learning Summary Report</p>
-                        </div>
-
-                        <div class="mb-8 break-inside-avoid">
-                            <h2 class="text-2xl font-bold text-gray-700 border-l-4 border-yellow-500 pl-3 mb-4">字彙應考策略</h2>
-                            <div class="p-4 bg-yellow-50 rounded-lg text-gray-700 space-y-3">
-                                 <div>
-                                    <h3 class="font-bold">一、字根字首法</h3>
-                                    <ul class="list-disc list-inside ml-2 text-gray-600">
-                                        <li>利用常見字首 (re-, un-, pre-) 和字尾 (-able, -tion, -ly) 來推測字義。</li>
-                                    </ul>
-                                </div>
-                                 <div>
-                                    <h3 class="font-bold">二、上下文推斷法</h3>
-                                    <ul class="list-disc list-inside ml-2 text-gray-600">
-                                        <li>即使不認識某個單字，也要從前後文的語意來推斷。</li>
-                                        <li>注意空格前後的搭配詞 (collocations)，例如動詞配名詞、形容詞配名詞。</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- --- NEW: Favorites Section Added --- -->
-                        <div class="mb-8 break-inside-avoid">
-                            <h2 class="text-2xl font-bold text-gray-700 border-l-4 border-yellow-500 pl-3 mb-4">我的最愛單字 (My Favorites)</h2>
-                            ${favoritesHTML}
-                        </div>
-                        <!-- --- END NEW --- -->
-
-                        <div class="mb-8 break-inside-avoid">
-                            <h2 class="text-2xl font-bold text-gray-700 border-l-4 border-teal-500 pl-3 mb-4">本次練習重要單字回顧</h2>
-                            ${keywordsHTML}
-                        </div>
-
-                        <!-- Removed Sentence Review Section -->
-
-                    </div>
-                    <div class="text-center my-4 no-print">
-                         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">列印或儲存為PDF</button>
-                    </div>
-                </body>
-                </html>
-            `;
-            
-            const reportWindow = window.open('', '_blank');
-            reportWindow.document.write(reportHTML);
-            reportWindow.document.close();
         }
-        
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(Math.max(0, currentTimerValue) / 60);
+            let seconds = Math.max(0, currentTimerValue) % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+        }
+
+        function pauseTest() {
+            isTestPaused = true;
+            clearInterval(timerInterval); // Pause the timer
+            showFavoritesModal();
+        }
+
+        // --- END NEW Timer Functions ---
+
         // --- NEW: Function to toggle favorite keywords ---
         function toggleFavoriteKeyword(kw, buttonEl) {
-            // Find the index of the keyword in the favorites array
             const index = favoriteKeywords.findIndex(favKw => favKw.word === kw.word);
             
             const solidHeart = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>`;
             const outlineHeart = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.06l-7.682-7.378a4.5 4.5 0 010-6.364z" /></svg>`;
 
             if (index > -1) {
-                // It exists, so remove it
                 favoriteKeywords.splice(index, 1);
                 if (buttonEl) buttonEl.innerHTML = outlineHeart;
             } else {
-                // It doesn't exist, so add it
                 favoriteKeywords.push(kw);
                 if (buttonEl) buttonEl.innerHTML = solidHeart;
             }
         }
-
-        function generateCertificate() {
-            const engNameInput = document.getElementById('eng-name-input');
-            const chnNameInput = document.getElementById('chn-name-input');
-            const engName = engNameInput.value.trim();
-            const chnName = chnNameInput.value.trim();
-            const errorP = document.getElementById('cert-error');
+        
+        // --- NEW: Functions for Favorites Modal ---
+        function showFavoritesModal() {
+            favoritesList.innerHTML = ''; 
             
-            if (!engName || !chnName) {
-                errorP.textContent = '請務必填寫中英文姓名！';
-                return;
-            }
-            errorP.textContent = '';
+            const uniqueFavorites = Array.from(new Map(favoriteKeywords.map(kw => [kw.word, kw])).values());
             
-            document.getElementById('certificate-section').style.display = 'none';
-            document.getElementById('final-actions-container').style.display = 'flex';
-            document.getElementById('retry-final-button').style.display = 'none'; // Hide retry button after passing
-
-            const score = finalScoreForCert;
-            const today = new Date();
-            const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-            const certHTML = `
-                <!DOCTYPE html>
-                <html lang="zh-Hant">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${chnName} - 統測英文衝刺 證書</title>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
-                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-                    <style>
-                        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; -webkit-print-color-adjust: exact; }
-                        @media print {
-                            .no-print { display: none; }
-                            body { margin: 0; padding: 0; }
-                            .certificate-container { box-shadow: none !important; border: none !important; page-break-inside: avoid; }
-                        }
-                    </style>
-                </head>
-                <body class="bg-gray-200 flex flex-col items-center justify-center min-h-screen p-4">
-                    <div class="w-[1024px] h-[724px] p-8 bg-white border-8 border-yellow-400 rounded-lg shadow-2xl relative text-gray-800 flex flex-col justify-center certificate-container">
-                        <div class="absolute inset-0 bg-repeat bg-center opacity-5" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTEyIDE3LjI3TDE4LjE4IDIxbC0xLjY0LTcuMDNMMjIgOS4yNGwtNy4xOS0uNjFMMTIgMiA5LjE5IDguNjMgMiA5LjI0bDUuNDYgNC43M0w1LjgyIDIxek04OCA4Mi4yN0w5NC4xOCA5MWwtMS4yNDctNy4wMyTDEwMCA3OS4yNGwtNy4xOS0uNjFMODggNzIgODUuMTkgNzguNjMgNzggNzkuMjRsNS40NiA0LjczTDgwLjgyIDkxeiIvPjwvZz48L3N2Zz4=');"></div>
-                        <div class="text-center relative">
-                             <h1 class="text-5xl font-bold text-gray-800 tracking-wider">CERTIFICATE</h1>
-                             <h2 class="text-3xl font-semibold text-yellow-600">of Achievement</h2>
-                             <p class="mt-8 text-lg text-gray-600">This certificate is proudly presented to</p>
-                             <p class="mt-2 text-lg text-gray-600">茲證明</p>
-                             <p class="text-4xl font-bold text-blue-800 my-4">${chnName}</p>
-                             <p class="text-3xl font-semibold text-blue-700">${engName}</p>
-                             <p class="mt-8 text-lg text-gray-600">For successfully completing the</p>
-                             <p class="mt-1 text-lg text-gray-600">成功完成</p>
-                             <p class="text-2xl font-bold text-gray-800 my-2">「統測英文 衝刺練習」</p>
-                             <p class="text-xl font-semibold text-gray-700">"TVE English Sprint" Training Course</p>
-                             <p class="mt-2 text-lg text-gray-600">with a final score of <strong class="text-2xl text-green-600">${score}%</strong></p>
-                             <div class="flex justify-between items-end mt-16">
-                                 <div class="text-left">
-                                     <p class="border-t-2 border-gray-400 pt-2 text-gray-700">Date / 日期</p>
-                                     <p class="text-lg font-semibold text-gray-800">${dateString}</p>
-                                 </div>
-                                 <div class="text-right">
-                                     <p class="border-t-2 border-gray-400 pt-2 text-gray-700">Instructor / 指導老師</p>
-                                     <p class="text-lg font-semibold text-gray-800">AI Language Tutor</p>
-                                 </div>
-                             </div>
-                        </div>
-                    </div>
-                    <div class="mt-8 text-center no-print">
-                        <p class="text-lg text-gray-700 mb-4">請使用瀏覽器的「列印」功能 (快捷鍵 Ctrl+P 或 Cmd+P) 來儲存為 PDF 或直接列印。</p>
-                        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-xl">列印 / 儲存為 PDF</button>
-                    </div>
-                </body>
-                </html>
-            `;
-            
-            const certWindow = window.open('', '_blank');
-            if(certWindow) {
-                certWindow.document.write(certHTML);
-                certWindow.document.close();
+            if (uniqueFavorites.length === 0) {
+                favoritesList.innerHTML = '<p class="text-gray-400 text-center">您尚未收藏任何單字。</p>';
             } else {
-                // Cannot use alert(), so we'll show the error inline, though it's less likely to be seen
-                errorP.textContent = "瀏覽器阻擋了彈出視窗，請允許彈出視窗。";
+                uniqueFavorites.forEach(kw => {
+                    const escapedWord = kw.word.replace(/'/g, "\\'");
+                    const escapedExample = kw.example.replace(/'/g, "\\'");
+                    
+                    const favItem = document.createElement('div');
+                    favItem.className = 'p-4 bg-gray-900 rounded-lg border border-gray-700';
+                    favItem.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <p class="text-lg font-bold text-teal-300">${kw.word}</p>
+                                    <button onclick="speak('${escapedWord}')" class="text-gray-400 p-1 rounded-full hover:bg-gray-700 hover:text-white transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+                                    </button>
+                                </div>
+                                <p class="text-gray-400">${kw.translation}</p>
+                            </div>
+                            <button onclick='toggleFavoriteKeyword(${JSON.stringify(kw).replace(/'/g, "\\'")}, this); showFavoritesModal();' class="p-1 rounded-full transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <div class="mt-2 flex items-center space-x-2">
+                             <p class="text-sm text-gray-500 italic flex-grow">用法: ${kw.example}</p>
+                             <button onclick="speak('${escapedExample}')" class="text-gray-400 p-1 rounded-full hover:bg-gray-700 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-400 italic">翻譯: ${kw.example_translation}</p>
+                    `;
+                    favoritesList.appendChild(favItem);
+                });
             }
+            
+            favoritesModal.style.display = 'flex';
+            setTimeout(() => favoritesCard.classList.add('active'), 10);
         }
 
+        function hideFavoritesModal() {
+            favoritesCard.classList.remove('active');
+            setTimeout(() => favoritesModal.style.display = 'none', 500);
+            
+            // NEW: Resume test if it was paused
+            if (isTestPaused) {
+                isTestPaused = false;
+                timerInterval = setInterval(runTimerTick, 1000); // Resume timer
+            }
+            
+            // This is a small fix: if we are in the test screen, removing a favorite
+            // should also update the heart icon on the question page, if it's visible.
+            const keywordsButton = document.querySelector('#post-answer-actions button');
+            if (keywordsButton && keywordsDisplay.innerHTML !== '') {
+                keywordsButton.click(); // Re-render the keywords list
+                // We don't click twice anymore, just re-render
+            }
+        }
+        
         window.onload = () => { showScreen('welcome-screen'); };
     </script>
 </body>
