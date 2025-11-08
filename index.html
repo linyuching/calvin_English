@@ -52,14 +52,27 @@
 
         <!-- Screen 1: Welcome -->
         <div id="welcome-screen" class="screen active-screen flex-col items-center text-center p-6 sm:p-8 bg-gray-800 rounded-2xl shadow-2xl">
-            <h1 class="text-3xl sm:text-4xl font-bold text-yellow-400 mb-4">四技二專統測 英文衝刺</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold text-yellow-400 mb-4">四技二專 英文衝刺</h1>
             <p class="text-base sm:text-lg text-gray-300 mb-8 leading-relaxed">
-                點擊下方按鈕，開始 30 題歷屆考題練習！
+                請選擇一個測驗版本 (每回10題)
             </p>
             <div class="space-y-4 w-full max-w-sm">
-                <button onclick="startPracticeTest()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
-                    開始練習 (共 30 題)
+                <button onclick="startPracticeVersion(1)" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
+                    測驗版本 (一)
                 </button>
+                <button onclick="startPracticeVersion(2)" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
+                    測驗版本 (二)
+                </button>
+                <button onclick="startPracticeVersion(3)" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
+                    測驗版本 (三)
+                </button>
+                <button onclick="startPracticeVersion(4)" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
+                    測驗版本 (四)
+                </button>
+                <button onclick="startPracticeVersion(5)" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300 transform hover:scale-105">
+                    測驗版本 (五)
+                </button>
+                <hr class="border-gray-600 my-4">
                 <button onclick="showFavoritesModal()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg text-lg sm:text-xl transition duration-300">
                     我的最愛單字
                 </button>
@@ -113,11 +126,11 @@
             <p id="module-complete-message" class="text-base sm:text-lg text-gray-300 mb-6"></p>
             <div class="text-lg sm:text-xl mb-8">本次成績 / Score: <span id="module-score" class="text-xl sm:text-2xl font-bold text-yellow-400"></span></div>
             <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                <button onclick="startPracticeTest()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                    再試一次
+                <button onclick="backToWelcome()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                    回版本選單
                 </button>
                 <button onclick="restartMission()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
-                    返回首頁
+                    重置並回首頁
                 </button>
             </div>
         </div>
@@ -409,8 +422,46 @@
             // Favorites are NOT reset
         }
         
-        function startPracticeTest() {
-            startTest('practice');
+        function startPracticeVersion(versionNumber) {
+            resetState();
+            currentTest = 'practice';
+            
+            const allQs = allPracticeQuestions;
+            switch(versionNumber) {
+                case 1:
+                    currentQuestions = allQs.slice(0, 10);
+                    break;
+                case 2:
+                    currentQuestions = allQs.slice(10, 20);
+                    break;
+                case 3:
+                    currentQuestions = allQs.slice(20, 30);
+                    break;
+                case 4:
+                    // Mix of 1 and 3 (0-4, 20-24)
+                    currentQuestions = allQs.slice(0, 5).concat(allQs.slice(20, 25));
+                    break;
+                case 5:
+                    // Mix of 2 and 3 (10-14, 25-29)
+                    currentQuestions = allQs.slice(10, 15).concat(allQs.slice(25, 30));
+                    break;
+                default:
+                    // Default to version 1
+                    currentQuestions = allQs.slice(0, 10);
+                    break;
+            }
+            
+            // Shuffle the selected 10 questions so they aren't in order
+            for (let i = currentQuestions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentQuestions[i], currentQuestions[j]] = [currentQuestions[j], currentQuestions[i]];
+            }
+
+            testTitle.textContent = `歷屆考題練習 (版本 ${versionNumber})`;
+            
+            loadQuestion();
+            startTimer(currentQuestions.length * 45); // 10 * 45 seconds
+            showScreen('test-screen');
         }
 
         function startTest(testType) { // testType will always be 'practice'
@@ -594,6 +645,10 @@
         function restartMission() {
             diagnosticResults = null;
             favoriteKeywords = []; // Clear favorites on full restart
+            showScreen('welcome-screen');
+        }
+
+        function backToWelcome() {
             showScreen('welcome-screen');
         }
 
